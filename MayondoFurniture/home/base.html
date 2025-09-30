@@ -1,0 +1,59 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block description %}MWF - Mayondo Wood & Furniture Management System{% endblock %}">
+    <meta name="author" content="Mayondo Wood & Furniture">
+    <title>{% block title %}MWF - Mayondo Wood & Furniture{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'logo2.png' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              "cordes-blue": "#005f66", 
+              "cordes-dark": "#007b83",
+            },
+          },
+        },
+      };
+    </script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+ <header class="bg-cordes-dark text-white px-6 py-4 flex justify-between items-center flex-wrap">
+  <!-- Logo -->
+  <div class="logo">
+    <h1 class="text-xl font-bold">MWF System</h1>
+  </div>
+
+  <!-- Navbar -->
+  <nav role="navigation" aria-label="Main navigation">
+    <ul class="flex space-x-6 list-none m-0 p-0">
+      <li><a href="/dashboard/" class="px-3 py-2 rounded-md font-medium hover:bg-cordes-blue transition-colors duration-300 no-underline text-white">Dashboard</a></li>
+      <li><a href="/stockRecord" class="px-3 py-2 rounded-md font-medium hover:bg-cordes-blue transition-colors duration-300 no-underline text-white">Stock</a></li>
+      <li><a href="/saleRecord/" class="px-3 py-2 rounded-md font-medium hover:bg-cordes-blue transition-colors duration-300 no-underline text-white">Sales</a></li>
+      <li><a href="/report" class="px-3 py-2 rounded-md font-medium hover:bg-cordes-blue transition-colors duration-300 no-underline text-white">Reports</a></li>
+      <li><a href="/logout" class="px-3 py-2 rounded-md font-medium hover:bg-cordes-blue transition-colors duration-300 no-underline text-white">Logout</a></li>
+    </ul>
+  </nav>
+</header>
+
+<!-- Skip Link for Accessibility -->
+<a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-cordes-dark text-white px-4 py-2 rounded z-50">Skip to main content</a>
+
+<main id="main-content" class="flex-1 max-w-7xl mx-auto p-6 w-full" role="main">
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="bg-cordes-dark text-white text-center py-4 mt-auto" role="contentinfo">
+    <p class="m-0">&copy; Copyright 2025 - Mayondo Wood & Furniture. All rights reserved.</p>
+    <p class="text-sm text-gray-300 mt-1">Furniture Management System</p>
+</footer>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

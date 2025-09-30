@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MWF</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          "cordes-dark": "#007b83",
+        },
+        fontFamily: {
+          'cooper': ['CooperBlack', 'serif'],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  @font-face {
+    font-family: 'CooperBlack';
+    src: url('../static/CooperBlack.woff2') format('woff2'),
+         url('../static/CooperBlack.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+  }
+</style>
+
+</head>
+<body class="bg-cordes-dark text-white font-cooper h-screen flex flex-col justify-between items-center text-center m-0">
+  <h1 class="font-cooper mt-5 text-2xl md:text-4xl lg:text-5xl font-bold">MAYONDO WOOD & FURNITURE WORKSHOP</h1>
+  <img src="../static/logo2.png" alt="furniture_logo" class="flex-shrink-0">
+  <a class="self-end m-5 px-8 py-3 border-0 rounded-lg cursor-pointer shadow-[0_0_8px_rgba(255,50,50,0.7)] transition-all duration-300 ease-in-out hover:shadow-[0_0_15px_rgba(255,50,50,1)] hover:scale-105 bg-red-600 text-white no-underline font-medium" href="/login/">GET STARTED</a>
+
+</body>
+</html>

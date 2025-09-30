@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MWF</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light d-flex justify-content-center align-items-start vh-100">
+
+  <div class="card shadow mt-5" style="max-width: 500px; width: 100%;">
+   <div class="card-header">
+  <a href="/saleRecord/" class="btn btn-success">Back to Sales</a>
+  
+ 
+
+<div class="card-body">
+  <h6>Product ID</h6>
+  <p>{{ selected.product_id }}</p>
+  <h6>Customer Name</h6>
+  <p>{{ selected.customer_name }}</p>
+  <h6>Product Name</h6>
+  <p>{{ selected.product_name }}</p>
+  <h6>Product Type</h6>
+  <p>{{ selected.product_type }}</p>
+  <h6>Quantity</h6>
+  <p>{{ selected.quantity }}</p>
+  <h6>Payment Type</h6>
+  <p>{{ selected.payment_type }}</p>
+  <h6>Sales Agent</h6>
+  <p>{{ selected.sales_agent }}</p>
+  <h6>Transport Required</h6>
+  <p>{{ selected.transport_required }}</p>
+
+</div>
+
+
+        <!-- update -->
+        <form method="POST" action="/update/{{ selected.id }}/"
+          {% csrf_token %}
+           <div class="mb-4">
+            <label class="block text-gray-700 font-bold mb-2" for="status">
+                New Product Type
+            </label>
+            <select name="new product_type"
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="product_type" required>
+               <option value="Timber">Timber</option>
+                <option value="Sofa">Sofa</option>
+                <option value="Present">Tables</option>
+                <option value="Timber">Cupboards</option>
+                <option value="Sofa">Drawer</option>
+                <option value="Present">Poles</option>
+              
+            </select>
+        </div>
+          <button type="submit" class="btn btn-danger">Update</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+
+ 
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

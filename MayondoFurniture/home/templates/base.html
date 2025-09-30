@@ -1,0 +1,192 @@
+<!--
+MAYONDO FURNITURE MANAGEMENT SYSTEM - BASE TEMPLATE
+===================================================
+
+This is the main template that all other pages extend from.
+It provides:
+- Common HTML structure and meta tags
+- Navigation header with dropdown menus
+- Tailwind CSS styling framework
+- FontAwesome icons
+- JavaScript for interactive features
+
+The template uses Django's template inheritance system where other templates
+can extend this base and override specific blocks.
+-->
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block description %}MWF - Mayondo Wood & Furniture Management System{% endblock %}">
+    <meta name="author" content="Mayondo Wood & Furniture">
+    <title>{% block title %}MWF - Mayondo Wood & Furniture{% endblock %}</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'logo2.png' %}">
+    
+    <!-- External CSS Libraries -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS Framework -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Custom Tailwind configuration for Mayondo brand colors
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              "cordes-blue": "#005f66",    // Primary brand color
+              "cordes-dark": "#007b83",    // Secondary brand color
+            },
+          },
+        },
+      };
+    </script>
+    
+    <!-- Additional head content from child templates -->
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+ <!-- Main Header with Navigation -->
+ <header class="bg-cordes-dark text-white px-6 py-4 flex justify-between items-center flex-wrap">
+  <!-- Company Logo and Branding -->
+  <div class="logo">
+    <h1 class="text-xl font-bold">MWF System</h1>
+  </div>
+
+  <!-- Main Navigation Menu with Dropdowns -->
+  <nav role="navigation" aria-label="Main navigation">
+    <ul class="flex space-x-6 list-none m-0 p-0">
+      <li><a href="/dashboard/" class="px-3 py-2 rounded-md font-medium hover:bg-cordes-blue transition-colors duration-300 no-underline text-white">Dashboard</a></li>
+      
+      <!-- Stock Dropdown -->
+      <li class="relative">
+        <button onclick="toggleHeaderDropdown('header-stock-dropdown')" class="flex items-center px-3 py-2 rounded-md font-medium hover:bg-cordes-blue transition-colors duration-300 no-underline text-white">
+          Stock
+          <i class="fas fa-chevron-down ml-1 text-xs transition-transform duration-200" id="header-stock-dropdown-icon"></i>
+        </button>
+        <div id="header-stock-dropdown" class="hidden absolute top-full left-0 mt-1 w-48 bg-white shadow-lg rounded-lg border border-gray-200 z-50">
+          <a href="/addStock/" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors text-sm no-underline">
+            <i class="fas fa-plus mr-2 text-xs"></i>Add Stock
+          </a>
+          <a href="/stockRecord/" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors text-sm no-underline">
+            <i class="fas fa-list mr-2 text-xs"></i>All Stock
+          </a>
+          <a href="/stockReport/" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors text-sm no-underline">
+            <i class="fas fa-chart-pie mr-2 text-xs"></i>Stock Report
+          </a>
+        </div>
+      </li>
+      
+      <!-- Sales Dropdown -->
+      <li class="relative">
+        <button onclick="toggleHeaderDropdown('header-sales-dropdown')" class="flex items-center px-3 py-2 rounded-md font-medium hover:bg-cordes-blue transition-colors duration-300 no-underline text-white">
+          Sales
+          <i class="fas fa-chevron-down ml-1 text-xs transition-transform duration-200" id="header-sales-dropdown-icon"></i>
+        </button>
+        <div id="header-sales-dropdown" class="hidden absolute top-full left-0 mt-1 w-48 bg-white shadow-lg rounded-lg border border-gray-200 z-50">
+          <a href="/addSale/" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors text-sm no-underline">
+            <i class="fas fa-plus mr-2 text-xs"></i>Add Sale
+          </a>
+          <a href="/saleRecord/" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors text-sm no-underline">
+            <i class="fas fa-list mr-2 text-xs"></i>All Sales
+          </a>
+          <a href="/saleReport/" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors text-sm no-underline">
+            <i class="fas fa-chart-line mr-2 text-xs"></i>Sales Report
+          </a>
+        </div>
+      </li>
+      
+      <!-- Reports Dropdown -->
+      <li class="relative">
+        <button onclick="toggleHeaderDropdown('header-reports-dropdown')" class="flex items-center px-3 py-2 rounded-md font-medium hover:bg-cordes-blue transition-colors duration-300 no-underline text-white">
+          Reports
+          <i class="fas fa-chevron-down ml-1 text-xs transition-transform duration-200" id="header-reports-dropdown-icon"></i>
+        </button>
+        <div id="header-reports-dropdown" class="hidden absolute top-full left-0 mt-1 w-48 bg-white shadow-lg rounded-lg border border-gray-200 z-50">
+          <a href="/report/" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors text-sm no-underline">
+            <i class="fas fa-file-alt mr-2 text-xs"></i>Generate Report
+          </a>
+          <a href="/saleReport/" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors text-sm no-underline">
+            <i class="fas fa-chart-line mr-2 text-xs"></i>Sales Report
+          </a>
+          <a href="/stockReport/" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors text-sm no-underline">
+            <i class="fas fa-chart-pie mr-2 text-xs"></i>Stock Report
+          </a>
+        </div>
+      </li>
+      
+      <li><a href="/logout/" class="px-3 py-2 rounded-md font-medium hover:bg-cordes-blue transition-colors duration-300 no-underline text-white">Logout</a></li>
+    </ul>
+  </nav>
+</header>
+
+<!-- Skip Link for Accessibility -->
+<a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-cordes-dark text-white px-4 py-2 rounded z-50">Skip to main content</a>
+
+<main id="main-content" class="flex-1 max-w-7xl mx-auto p-6 w-full" role="main">
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="bg-cordes-dark text-white text-center py-4 mt-auto" role="contentinfo">
+    <p class="m-0">&copy; Copyright 2025 - Mayondo Wood & Furniture. All rights reserved.</p>
+    <p class="text-sm text-gray-300 mt-1">Designed by Unity</p>
+</footer>
+
+{% block extra_js %}{% endblock %}
+
+<script>
+function toggleHeaderDropdown(dropdownId) {
+  const dropdown = document.getElementById(dropdownId);
+  const icon = document.getElementById(dropdownId + '-icon');
+  
+  // Close all other header dropdowns first
+  const allHeaderDropdowns = document.querySelectorAll('[id^="header-"][id$="-dropdown"]');
+  const allHeaderIcons = document.querySelectorAll('[id^="header-"][id$="-dropdown-icon"]');
+  
+  allHeaderDropdowns.forEach((dd) => {
+    if (dd.id !== dropdownId) {
+      dd.classList.add('hidden');
+    }
+  });
+  
+  allHeaderIcons.forEach((ic) => {
+    if (ic.id !== dropdownId + '-icon') {
+      ic.classList.remove('rotate-180');
+    }
+  });
+  
+  // Toggle current dropdown
+  if (dropdown.classList.contains('hidden')) {
+    dropdown.classList.remove('hidden');
+    icon.classList.add('rotate-180');
+  } else {
+    dropdown.classList.add('hidden');
+    icon.classList.remove('rotate-180');
+  }
+}
+
+// Close header dropdowns when clicking outside
+document.addEventListener('click', function(e) {
+  const isHeaderDropdownButton = e.target.closest('[onclick*="toggleHeaderDropdown"]');
+  const isHeaderDropdownContent = e.target.closest('[id^="header-"][id$="-dropdown"]');
+  
+  if (!isHeaderDropdownButton && !isHeaderDropdownContent) {
+    const allHeaderDropdowns = document.querySelectorAll('[id^="header-"][id$="-dropdown"]');
+    const allHeaderIcons = document.querySelectorAll('[id^="header-"][id$="-dropdown-icon"]');
+    
+    allHeaderDropdowns.forEach((dropdown) => {
+      dropdown.classList.add('hidden');
+    });
+    
+    allHeaderIcons.forEach((icon) => {
+      icon.classList.remove('rotate-180');
+    });
+  }
+});
+</script>
+
+</body>
+</html>

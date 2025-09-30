@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Stock Report - MWF{% endblock %}
+
+{% block extra_head %}
+    <style>
+      @media print {
+        .print-btn {
+          display: none !important;
+        }
+      }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-5 m-4 relative">
+      <div class="p-5">
+        <button class="print-btn absolute top-5 right-5 px-4 py-2 bg-cordes-dark text-white border-0 rounded cursor-pointer hover:bg-cordes-blue transition-colors" onclick="window.print()">
+          🖨️ Print Report
+        </button>
+
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Stock Report</h1>
+        
+        <div class="mb-6 space-y-2">
+          {% if start_date and end_date %}
+          <p class="text-gray-700">Showing results from {{ start_date }} to {{ end_date }}</p>
+          {% else %}
+          <p class="text-gray-500">No date range selected.</p>
+          {% endif %}
+
+          <p class="text-gray-700"><span class="font-semibold">Company name:</span> Mayondo Furniture Workshop</p>
+          <p class="text-gray-700"><span class="font-semibold">Date range:</span> {{ start_date }} to {{ End_date }}</p>
+          <p class="text-gray-700"><span class="font-semibold">Prepared by:</span> {{ preparers_name }}</p>
+          <p class="text-gray-700"><span class="font-semibold">Report date:</span> {{ Date_of_report }}</p>
+        </div>
+
+        <img src="#" alt="logo" class="mb-6 h-16 object-contain" />
+        <section class="overflow-x-auto">
+          <form action="" method="post">
+            <table class="w-full border-collapse bg-white shadow-sm">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="px-4 py-3 text-left text-sm font-semibold text-gray-800 border border-gray-300">Product Name</th>
+                  <th class="px-4 py-3 text-left text-sm font-semibold text-gray-800 border border-gray-300">Cost Price</th>
+                  <th class="px-4 py-3 text-left text-sm font-semibold text-gray-800 border border-gray-300">Product Price</th>
+                  <th class="px-4 py-3 text-left text-sm font-semibold text-gray-800 border border-gray-300">Quantity</th>
+                  <th class="px-4 py-3 text-left text-sm font-semibold text-gray-800 border border-gray-300">Supplier Name</th>
+                  <th class="px-4 py-3 text-left text-sm font-semibold text-gray-800 border border-gray-300">Quality</th>
+                  <th class="px-4 py-3 text-left text-sm font-semibold text-gray-800 border border-gray-300">Color</th>
+                  <th class="px-4 py-3 text-left text-sm font-semibold text-gray-800 border border-gray-300">Measurements</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                <tr class="hover:bg-gray-50 transition-colors">
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300 font-medium">1</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                </tr>
+                <tr class="hover:bg-gray-50 transition-colors">
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300 font-medium">2</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                </tr>
+                <tr class="hover:bg-gray-50 transition-colors">
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300 font-medium">3</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
+                </tr>
+              </tbody>
+            </table>
+          </form>
+        </section>
+      </div>
+    </div>
+{% endblock %}

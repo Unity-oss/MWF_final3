@@ -1,0 +1,35 @@
+
+body{
+    background-color: #007b83; 
+    color: white;
+    font-family: cooperblack;
+    height: 100vh; 
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; 
+    align-items: center;
+    text-align: center;
+    margin: 0;
+  }
+h1{
+    font-family: CooperBlack;
+    margin-top: 20px;
+  }
+.btn{
+    align-self: flex-end; 
+    margin: 20px;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(255, 50, 50,0.7);
+    transition: all 0.3s ease-in-out;
+  }
+.btn:hover{
+    box-shadow: 
+    0 0 15px rgba(255, 50,50,1);
+    transform: scale(1.05);
+  }
+img{
+    align-items: center;
+  }

@@ -1,0 +1,36 @@
+.print-btn {
+  position: absolute;   
+  top: 20px;            
+  right: 20px;          
+  padding: 10px 15px;
+  background-color: #007b83;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.print-btn:hover {
+  background-color: #005f66;
+}
+
+/* Hide button when printing */
+@media print {
+  .print-btn {
+    display: none;
+  }
+}
+.report_table{
+    display: flex;
+    flex-direction: row;
+    box-shadow: rgb(70, 68, 68);
+}
+.card {
+  max-width: 900px;   /* keeps report centered & neat */
+  margin: 20px auto;  /* center horizontally */
+  border-radius: 10px;
+}
+
+.card-body {
+  padding: 20px;
+}

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt - {{ receipt_number }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+        }
+        .receipt-paper {
+            max-width: 400px;
+            margin: 0 auto;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+    <!-- Receipt Container -->
+    <div class="receipt-paper bg-white p-6 shadow-lg rounded-lg">
+        
+        <!-- Header -->
+        <div class="text-center mb-6 border-b-2 border-gray-300 pb-4">
+            <h1 class="text-xl font-bold mb-2">{{ company_name }}</h1>
+            <p class="text-sm text-gray-600">{{ company_address }}</p>
+            <p class="text-sm text-gray-600">{{ company_phone }}</p>
+            <p class="text-lg font-semibold mt-3">SALES RECEIPT</p>
+            <p class="text-sm">Receipt #: {{ receipt_number }}</p>
+        </div>
+
+        <!-- Sale Information -->
+        <div class="mb-6">
+            <div class="grid grid-cols-2 gap-2 text-sm mb-4">
+                <div><strong>Date:</strong></div>
+                <div>{{ sale.date }}</div>
+                
+                <div><strong>Customer:</strong></div>
+                <div>{{ sale.customer_name }}</div>
+                
+                <div><strong>Sales Agent:</strong></div>
+                <div>{{ sale.sales_agent }}</div>
+                
+                <div><strong>Payment:</strong></div>
+                <div>{{ sale.payment_type }}</div>
+            </div>
+        </div>
+
+        <!-- Items -->
+        <div class="mb-6">
+            <div class="border-t border-b border-gray-300 py-3">
+                <div class="grid grid-cols-12 gap-1 text-sm font-semibold mb-2">
+                    <div class="col-span-6">Item</div>
+                    <div class="col-span-2 text-right">Qty</div>
+                    <div class="col-span-2 text-right">Price</div>
+                    <div class="col-span-2 text-right">Amount</div>
+                </div>
+                
+                <div class="grid grid-cols-12 gap-1 text-sm">
+                    <div class="col-span-6">
+                        {{ sale.product_name }}<br>
+                        <span class="text-xs text-gray-500">{{ sale.product_type }}</span><br>
+                        <span class="text-xs text-gray-500">ID: {{ sale.product_id }}</span>
+                    </div>
+                    <div class="col-span-2 text-right">{{ sale.quantity }}</div>
+                    <div class="col-span-2 text-right">UGX {{ unit_price|floatformat:0 }}</div>
+                    <div class="col-span-2 text-right">UGX {{ subtotal|floatformat:0 }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Totals -->
+        <div class="mb-6">
+            <div class="space-y-2">
+                <div class="flex justify-between text-sm">
+                    <span>Subtotal:</span>
+                    <span>UGX {{ subtotal|floatformat:0 }}</span>
+                </div>
+                
+                {% if transport_fee > 0 %}
+                <div class="flex justify-between text-sm">
+                    <span>Transport Fee (5%):</span>
+                    <span>UGX {{ transport_fee|floatformat:0 }}</span>
+                </div>
+                {% endif %}
+                
+                <div class="border-t border-gray-300 pt-2">
+                    <div class="flex justify-between text-lg font-bold">
+                        <span>TOTAL:</span>
+                        <span>UGX {{ total_amount|floatformat:0 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transport Info -->
+        {% if sale.transport_required == 'Y' or sale.transport_required == 'y' or sale.transport_required == '1' %}
+        <div class="mb-6 p-3 bg-blue-50 rounded border">
+            <div class="flex items-center text-sm">
+                <i class="fas fa-truck mr-2 text-blue-600"></i>
+                <span><strong>Transport Required:</strong> Yes (5% fee applied)</span>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="text-center text-xs text-gray-500 mt-6 pt-4 border-t border-gray-300">
+            <p>Thank you for your business!</p>
+            <p>Mayondo Wood & Furniture - Quality Furniture Solutions</p>
+            <p class="mt-2">Generated on {{ sale.date }} at {% now "H:i" %}</p>
+        </div>
+    </div>
+
+    <!-- Action Buttons (No Print) -->
+    <div class="no-print text-center mt-6 space-x-4">
+        <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+            <i class="fas fa-print mr-2"></i>Print Receipt
+        </button>
+        <button onclick="window.close()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700">
+            <i class="fas fa-times mr-2"></i>Close
+        </button>
+        <a href="/saleRecord/" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 inline-block">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Sales
+        </a>
+    </div>
+
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</body>
+</html>

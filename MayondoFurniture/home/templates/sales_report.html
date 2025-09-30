@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Sales Report - MWF{% endblock %}
+
+{% block extra_head %}
+  <style>
+    @media print {
+      .print-btn {
+        display: none !important;
+      }
+    }
+    
+    .editable-cell:empty::before {
+      content: attr(data-placeholder);
+      color: #6b7280;
+      pointer-events: none;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="max-w-screen-2xl mx-auto bg-white rounded-lg p-5 relative shadow-lg">
+    <!-- Print button -->
+    <button class="print-btn absolute top-5 right-5 px-4 py-2 bg-cordes-dark text-white border-0 rounded cursor-pointer hover:bg-cordes-blue transition-colors" onclick="window.print()">🖨️ Print Report</button>
+
+    <!-- First + Second Tables (side by side) -->
+    <div class="flex justify-between items-start mt-16 gap-5">
+      <!-- First Table -->
+      <table class="border-collapse w-1/2">
+        <caption class="font-bold mb-3 text-left text-lg">SALES REPORT</caption>
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="border border-black p-2 text-left">SalesPerson</th>
+            <th class="border border-black p-2 text-left">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="border border-black p-2 editable-cell" contenteditable="true" data-placeholder="Tusiime George"></td>
+            <td class="border border-black p-2 editable-cell" contenteditable="true" data-placeholder="02/02/2025"></td>
+          </tr>
+        </tbody>
+      </table>
+
+
+    <!-- Third Table -->
+    <section class="w-full mt-10">
+      <h2 class="text-xl font-semibold mb-4 text-gray-800">Sales</h2>
+      <table class="w-full border-collapse">
+        <thead>
+          <tr class="bg-gray-100">
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Customer</th>
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Product</th>
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Type</th>
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Qty</th>
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Date</th>
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Payment</th>
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Agent</th>
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Transport</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for sale in sales %}
+        <tr class="hover:bg-gray-50">
+          <td class="p-3 border-b border-gray-200">{{ sale.customer_name }}</td>
+          <td class="p-3 border-b border-gray-200">{{ sale.product_name }}</td>
+          <td class="p-3 border-b border-gray-200">{{ sale.product_type }}</td>
+          <td class="p-3 border-b border-gray-200">{{ sale.quantity }}</td>
+          <td class="p-3 border-b border-gray-200">{{ sale.date }}</td>
+          <td class="p-3 border-b border-gray-200">{{ sale.payment_type }}</td>
+          <td class="p-3 border-b border-gray-200">{{ sale.sales_agent }}</td>
+          <td class="p-3 border-b border-gray-200">{{ sale.transport_required|yesno:"Yes,No" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="p-3 border-b border-gray-200 text-center text-gray-500">No items yet. Add one</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      </table>
+    </section>
+  </div>
+{% endblock %}
