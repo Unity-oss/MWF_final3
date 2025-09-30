@@ -74,9 +74,11 @@ can extend this base and override specific blocks.
           <a href="/stockRecord/" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors text-sm no-underline">
             <i class="fas fa-list mr-2 text-xs"></i>All Stock
           </a>
+          {% if is_manager %}
           <a href="/stockReport/" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors text-sm no-underline">
             <i class="fas fa-chart-pie mr-2 text-xs"></i>Stock Report
           </a>
+          {% endif %}
         </div>
       </li>
       
@@ -93,13 +95,16 @@ can extend this base and override specific blocks.
           <a href="/saleRecord/" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors text-sm no-underline">
             <i class="fas fa-list mr-2 text-xs"></i>All Sales
           </a>
+          {% if is_manager %}
           <a href="/saleReport/" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors text-sm no-underline">
             <i class="fas fa-chart-line mr-2 text-xs"></i>Sales Report
           </a>
+          {% endif %}
         </div>
       </li>
       
-      <!-- Reports Dropdown -->
+      <!-- Reports Dropdown - Only visible to Managers -->
+      {% if is_manager %}
       <li class="relative">
         <button onclick="toggleHeaderDropdown('header-reports-dropdown')" class="flex items-center px-3 py-2 rounded-md font-medium hover:bg-cordes-blue transition-colors duration-300 no-underline text-white">
           Reports
@@ -117,6 +122,7 @@ can extend this base and override specific blocks.
           </a>
         </div>
       </li>
+      {% endif %}
       
       <li><a href="/logout/" class="px-3 py-2 rounded-md font-medium hover:bg-cordes-blue transition-colors duration-300 no-underline text-white">Logout</a></li>
     </ul>

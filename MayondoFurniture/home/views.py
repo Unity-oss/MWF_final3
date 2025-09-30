@@ -31,6 +31,24 @@ from home.models import Sale, Stock, Notification
 from .forms import SaleForm, StockForm, SaleViewForm, StockViewForm
 
 # ===== SECURITY DECORATORS =====
+# Decorator to restrict access to managers only
+def manager_required(view_func):
+    """
+    Security decorator to restrict access to managers only
+    Redirects to dashboard if user is not a manager
+    """
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('login')
+        
+        if not request.user.groups.filter(name="Manager").exists():
+            messages.error(request, "Access denied. Manager privileges required.")
+            return redirect('dashboard')
+        
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
 # Decorator to restrict direct URL access
 def restrict_direct_access(view_func):
     """
@@ -283,6 +301,7 @@ def addUser(request):
 
 
 @restrict_direct_access
+@manager_required
 def report(request):
     if request.method == "POST":
         report_type = request.POST.get("report_type")
@@ -297,6 +316,7 @@ def report(request):
     return render(request, 'gen_report.html')
 
 @restrict_direct_access
+@manager_required
 def sales_report(request):
     start_date = request.GET.get("start_date")
     end_date = request.GET.get("end_date")
@@ -306,6 +326,7 @@ def sales_report(request):
     })
 
 @restrict_direct_access
+@manager_required
 def stock_report(request):
     start_date = request.GET.get("start_date")
     end_date = request.GET.get("end_date")
@@ -479,6 +500,7 @@ def deleteSale(request, product_id):
 
 
 @restrict_direct_access
+@manager_required
 def saleReport(request):
     all_Sale = Sale.objects.all()
 
@@ -572,6 +594,7 @@ def updateStock(request, product_id):
     }
     return render(request, 'update_stock.html', context)
 
+@manager_required
 def stockReport(request):
     all_Stock = Stock.objects.all()
 
