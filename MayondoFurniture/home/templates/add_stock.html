@@ -11,7 +11,7 @@
 
         <form method="post" class="crispy-form">
             {% csrf_token %}
-            {% crispy form %}
+            {% include 'forms/stock_form.html' %}
         </form>
     </div>
 {% endblock %}

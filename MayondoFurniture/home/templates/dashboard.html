@@ -44,6 +44,80 @@ Key Features:
         },
       };
     </script>
+    <style>
+      /* Notification Modal Animations */
+      .notification-modal-enter {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      .notification-modal-enter-active {
+        opacity: 1;
+        transform: scale(1);
+        transition: opacity 300ms, transform 300ms;
+      }
+      .notification-modal-exit {
+        opacity: 1;
+        transform: scale(1);
+      }
+      .notification-modal-exit-active {
+        opacity: 0;
+        transform: scale(0.95);
+        transition: opacity 300ms, transform 300ms;
+      }
+      
+      /* Custom scrollbar for notification list */
+      #modal-notification-list {
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e0 #f7fafc;
+      }
+      #modal-notification-list::-webkit-scrollbar {
+        width: 6px;
+      }
+      #modal-notification-list::-webkit-scrollbar-track {
+        background: #f7fafc;
+        border-radius: 3px;
+      }
+      #modal-notification-list::-webkit-scrollbar-thumb {
+        background: #cbd5e0;
+        border-radius: 3px;
+      }
+      #modal-notification-list::-webkit-scrollbar-thumb:hover {
+        background: #a0aec0;
+      }
+      
+      /* Notification bell pulse animation for unread notifications */
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+      
+      .notification-bell-active {
+        animation: pulse 2s infinite;
+      }
+      
+      /* Notification item hover effects and animations */
+      .notification-item {
+        transition: all 0.2s ease-in-out;
+      }
+      .notification-item:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      
+      /* Fade out animation for removing notifications */
+      .notification-fadeout {
+        opacity: 0 !important;
+        transform: translateX(100%) !important;
+        transition: opacity 0.3s ease-out, transform 0.3s ease-out !important;
+      }
+    </style>
   </head>
   <body class="bg-gray-100 min-h-screen">
     <!-- Sidebar -->
@@ -249,7 +323,9 @@ Key Features:
               </div>
               <div class="relative">
                 <button
-                  class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  id="notification-bell"
+                  onclick="openNotificationModal()"
+                  class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors relative"
                 >
                   <i class="fas fa-bell text-xl"></i>
                   <span
@@ -258,12 +334,6 @@ Key Features:
                     >0</span
                   >
                 </button>
-                <div
-                  id="notif-list"
-                  class="hidden absolute right-0 mt-2 w-64 bg-white shadow-lg rounded-lg border border-gray-200"
-                >
-                  <ul class="max-h-64 overflow-y-auto"></ul>
-                </div>
               </div>
             </div>
           </div>
@@ -467,22 +537,311 @@ Key Features:
         </div>
       </main>
     </div>
+
+    <!-- Notification Modal -->
+    <div id="notificationModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      <!-- Background overlay -->
+      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeNotificationModal()"></div>
+
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <!-- Modal Header -->
+          <div class="bg-cordes-dark px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                  <i class="fas fa-bell text-cordes-blue text-xl"></i>
+                </div>
+                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                  <h3 class="text-lg leading-6 font-medium text-white" id="modal-title">
+                    Notifications
+                  </h3>
+                  <p class="text-sm text-gray-200">
+                    <span id="modal-notif-count">0</span> unread notifications
+                  </p>
+                </div>
+              </div>
+              <button onclick="closeNotificationModal()" class="text-white hover:text-gray-200 focus:outline-none">
+                <i class="fas fa-times text-xl"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Modal Body -->
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-6">
+            <div class="max-h-96 overflow-y-auto">
+              <div id="modal-notification-list" class="space-y-3">
+                <!-- Notifications will be populated here -->
+              </div>
+              <div id="no-notifications" class="text-center py-8 text-gray-500 hidden">
+                <i class="fas fa-bell-slash text-4xl mb-4"></i>
+                <p>No notifications available</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <button onclick="markAllAsRead()" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-cordes-blue text-base font-medium text-white hover:bg-cordes-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cordes-blue sm:ml-3 sm:w-auto sm:text-sm">
+              Mark All as Read
+            </button>
+            <button onclick="closeNotificationModal()" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cordes-blue sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
 <script>
+    // Notification Modal Functions
+    let notificationsData = [];
+
     function fetchNotifications() {
-    fetch("/notifications/")   // 👈 URL
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById("notif-count").innerText = data.count;
-            let list = document.querySelector("#notif-list ul");
-            list.innerHTML = "";
-            data.notifications.forEach(n => {
-                let li = document.createElement("li");
-                li.className = "px-4 py-2 text-sm text-gray-700 hover:bg-gray-100";
-                li.textContent = `${n.message} (${n.time})`;
-                list.appendChild(li);
+        fetch("/notifications/")
+            .then(response => response.json())
+            .then(data => {
+                notificationsData = data.notifications;
+                updateNotificationUI(data);
+            })
+            .catch(error => {
+                console.error('Error fetching notifications:', error);
             });
+    }
+
+    function updateNotificationUI(data) {
+        // Update bell badge count
+        const countElement = document.getElementById("notif-count");
+        const modalCountElement = document.getElementById("modal-notif-count");
+        const bellButton = document.getElementById("notification-bell");
+        
+        countElement.innerText = data.count;
+        modalCountElement.innerText = data.count;
+        
+        // Hide/show badge based on count and add pulse animation
+        if (data.count > 0) {
+            countElement.style.display = "flex";
+            bellButton.classList.add("notification-bell-active");
+        } else {
+            countElement.style.display = "none";
+            bellButton.classList.remove("notification-bell-active");
+        }
+        
+        // Populate modal notification list
+        populateModalNotifications(data.notifications);
+    }
+
+    function populateModalNotifications(notifications) {
+        const modalList = document.getElementById("modal-notification-list");
+        const noNotificationsDiv = document.getElementById("no-notifications");
+        
+        modalList.innerHTML = "";
+        
+        if (notifications.length === 0) {
+            noNotificationsDiv.classList.remove("hidden");
+            modalList.classList.add("hidden");
+        } else {
+            noNotificationsDiv.classList.add("hidden");
+            modalList.classList.remove("hidden");
+            
+            notifications.forEach(notification => {
+                const notificationItem = createNotificationItem(notification);
+                modalList.appendChild(notificationItem);
+            });
+        }
+    }
+
+    function createNotificationItem(notification) {
+        const div = document.createElement("div");
+        div.className = `notification-item p-4 border border-gray-200 rounded-lg bg-blue-50 border-blue-200`;
+        div.setAttribute('data-notification-id', notification.id);
+        
+        const timeAgo = getTimeAgo(notification.time);
+        const activityIcon = getActivityIcon(notification.activity_type);
+        
+        div.innerHTML = `
+            <div class="flex items-start space-x-3">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        ${activityIcon}
+                    </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm text-gray-900 font-medium">${notification.message}</p>
+                    <p class="text-xs text-gray-500 mt-1">${timeAgo}</p>
+                </div>
+                <div class="flex-shrink-0">
+                    <button onclick="markSingleAsRead(${notification.id})" class="text-xs text-blue-600 hover:text-blue-800 focus:outline-none transition-colors">
+                        Mark as read
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        return div;
+    }
+
+    function getActivityIcon(activityType) {
+        const iconClass = activityType === 'success' ? 'fas fa-check text-green-500' :
+                         activityType === 'warning' ? 'fas fa-exclamation-triangle text-yellow-500' :
+                         activityType === 'error' ? 'fas fa-times text-red-500' :
+                         'fas fa-info-circle text-blue-500';
+        
+        return `<i class="${iconClass}"></i>`;
+    }
+
+    function getTimeAgo(timeString) {
+        // Simple time ago calculation - you can enhance this
+        const now = new Date();
+        const time = new Date(timeString);
+        const diffMs = now - time;
+        const diffMins = Math.floor(diffMs / 60000);
+        
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+        const diffHours = Math.floor(diffMins / 60);
+        if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+        const diffDays = Math.floor(diffHours / 24);
+        return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    }
+
+    function openNotificationModal() {
+        document.getElementById("notificationModal").classList.remove("hidden");
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        
+        // Add keyboard event listener
+        document.addEventListener('keydown', handleModalKeyPress);
+    }
+
+    function closeNotificationModal() {
+        document.getElementById("notificationModal").classList.add("hidden");
+        document.body.style.overflow = 'auto'; // Restore scrolling
+        
+        // Remove keyboard event listener
+        document.removeEventListener('keydown', handleModalKeyPress);
+    }
+
+    function handleModalKeyPress(event) {
+        // Close modal on Escape key press
+        if (event.key === 'Escape') {
+            closeNotificationModal();
+        }
+    }
+
+
+
+    function markSingleAsRead(notificationId) {
+        // Find the notification element and animate it out
+        const notificationElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+        if (notificationElement) {
+            notificationElement.classList.add('notification-fadeout');
+            notificationElement.style.pointerEvents = 'none';
+            
+            // Remove the element after animation completes
+            setTimeout(() => {
+                if (notificationElement.parentNode) {
+                    notificationElement.parentNode.removeChild(notificationElement);
+                }
+            }, 300);
+        }
+        
+        fetch('/mark_notification_read/', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ id: notificationId })
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                // Remove notification from local data
+                notificationsData = notificationsData.filter(n => n.id !== notificationId);
+                
+                // Update bell count and activity feed
+                fetchNotifications();
+                fetchActivity();
+                
+                // Check if modal should show "no notifications" message
+                updateModalEmptyState();
+            } else {
+                // Restore the notification element if the request failed
+                if (notificationElement) {
+                    notificationElement.classList.remove('notification-fadeout');
+                    notificationElement.style.pointerEvents = 'auto';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error marking notification as read:', error);
+            // Restore the notification element if the request failed
+            if (notificationElement) {
+                notificationElement.classList.remove('notification-fadeout');
+                notificationElement.style.pointerEvents = 'auto';
+            }
         });
-}
+    }
+
+    function updateModalEmptyState() {
+        const modalList = document.getElementById("modal-notification-list");
+        const noNotificationsDiv = document.getElementById("no-notifications");
+        
+        // Check if there are any remaining notification items
+        const remainingNotifications = modalList.querySelectorAll('.notification-item:not(.notification-fadeout)');
+        
+        if (remainingNotifications.length === 0) {
+            modalList.classList.add("hidden");
+            noNotificationsDiv.classList.remove("hidden");
+        }
+    }
+
+    function markAllAsRead() {
+        const unreadNotifications = notificationsData.filter(n => !n.is_read);
+        
+        if (unreadNotifications.length === 0) {
+            closeNotificationModal();
+            return;
+        }
+
+        // Use the bulk endpoint to mark all as read
+        fetch('/mark_all_notifications_read/', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({})
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                fetchNotifications();
+                fetchActivity();
+                closeNotificationModal();
+            }
+        })
+        .catch(error => {
+            console.error('Error marking all notifications as read:', error);
+        });
+    }
+
+    // Helper function to get CSRF cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
 
 function fetchActivity() {
   fetch("/activityFeed/")

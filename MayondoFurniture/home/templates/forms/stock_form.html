@@ -1,0 +1,42 @@
+{% load crispy_forms_tags %}
+
+{% include 'snippets/form_card_header.html' with title='Stock Information' info='Product ID will be automatically generated based on category and date.' %}
+
+    <!-- Product Selection (full width) -->
+    <div class="form-row mb-4">
+        <div class="col-12">
+            {{ form.product_ref|as_crispy_field }}
+        </div>
+    </div>
+
+    <!-- Quantity and Date (2 columns) -->
+    <div class="form-row mb-4">
+        <div class="col-md-4">
+            {{ form.quantity|as_crispy_field }}
+        </div>
+        <div class="col-md-8">
+            {{ form.date|as_crispy_field }}
+        </div>
+    </div>
+
+    <!-- Supplier Name (full width) -->
+    <div class="form-row mb-4">
+        <div class="col-12">
+            {{ form.supplier_name|as_crispy_field }}
+        </div>
+    </div>
+
+    <!-- Cost, Price, Origin (3 columns) -->
+    <div class="form-row mb-4">
+        <div class="col-md-4">
+            {{ form.cost|as_crispy_field }}
+        </div>
+        <div class="col-md-4">
+            {{ form.price|as_crispy_field }}
+        </div>
+        <div class="col-md-4">
+            {{ form.origin|as_crispy_field }}
+        </div>
+    </div>
+
+{% include 'snippets/form_actions.html' with submit_text='Save Stock' cancel_url='/stockRecord/' %}

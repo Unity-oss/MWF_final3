@@ -1,0 +1,18 @@
+{% comment %}
+Form Row Snippet - Creates responsive grid rows
+Usage: {% include 'snippets/form_row.html' with fields='field1,field2,field3' widths='4,4,4' %}
+{% endcomment %}
+
+{% load crispy_forms_tags %}
+
+<div class="form-row">
+    {% with field_list=fields|split:',' width_list=widths|split:',' %}
+        {% for field_name in field_list %}
+            {% with width=width_list|slice:forloop.counter0|first|default:'12' %}
+            <div class="form-group col-md-{{ width }} mb-4">
+                {{ form|crispy_field:field_name }}
+            </div>
+            {% endwith %}
+        {% endfor %}
+    {% endwith %}
+</div>

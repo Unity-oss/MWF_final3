@@ -1,0 +1,14 @@
+{% comment %}
+Form Actions Snippet 
+Usage: {% include 'snippets/form_actions.html' with submit_text='Save' cancel_url='/list/' %}
+{% endcomment %}
+
+<div class="form-actions mt-4">
+    <button type="submit" class="btn bg-cordes-dark text-white px-6 py-3 rounded-lg hover:bg-cordes-blue transition-colors mr-3">
+        {{ submit_text|default:"Save" }}
+    </button>
+    <a href="{{ cancel_url }}" class="btn bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+        Cancel
+    </a>
+</div>
+</div> {% comment %}Close the card div from header{% endcomment %}

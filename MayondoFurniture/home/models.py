@@ -1,10 +1,42 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from datetime import datetime, date
 import uuid
-from datetime import datetime
 
 # ===== MAYONDO FURNITURE MANAGEMENT SYSTEM MODELS =====
 # This file defines the database structure for the furniture business
+
+class Product(models.Model):
+    """
+    Product Model - Central product catalog for the furniture business
+    This eliminates duplicate product names and ensures data consistency
+    """
+    # Product categories available in the furniture business
+    PRODUCT_CHOICES = [
+        ('Timber', 'Timber'), 
+        ('Sofa', 'Sofa'),
+        ('Tables','Tables'),
+        ('Cupboards','Cupboards'),
+        ('Drawer','Drawer'),
+        ('Poles','Poles')
+    ]
+    
+    # Product type choices
+    PRODUCT_TYPE_CHOICES = [('Wood', 'Wood'), ('Furniture', 'Furniture')]
+    
+    name = models.CharField(max_length=50, choices=PRODUCT_CHOICES)
+    product_type = models.CharField(max_length=20, choices=PRODUCT_TYPE_CHOICES)
+    description = models.TextField(blank=True, help_text="Optional product description")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['name', 'product_type']
+        ordering = ['name', 'product_type']
+    
+    def __str__(self):
+        return f"{self.name} ({self.product_type})"
+
 
 class Sale(models.Model):
     """
@@ -24,12 +56,16 @@ class Sale(models.Model):
     # Product identification - auto-generated unique ID
     product_id = models.CharField(max_length=50, blank=True, unique=True)
     
+    # NEW: Foreign Key to Product model (better approach)
+    product_ref = models.ForeignKey(Product, on_delete=models.PROTECT, null=True, blank=True, 
+                                   help_text="Select product from catalog")
+    
     # Customer information
     customer_name = models.CharField(max_length=100)
     
-    # Product details with category restrictions
-    product_name = models.TextField(choices = CUSTOMER_CHOICES)
-    product_type = models.CharField(max_length=20, choices=PRODUCT_TYPE_CHOICES)
+    # LEGACY: Product details (keeping for backward compatibility during migration)
+    product_name = models.TextField(choices = CUSTOMER_CHOICES, null=True, blank=True)
+    product_type = models.CharField(max_length=20, choices=PRODUCT_TYPE_CHOICES, null=True, blank=True)
     
     # Sale quantity and timing
     quantity = models.IntegerField()  # Number of items sold
@@ -40,11 +76,47 @@ class Sale(models.Model):
     sales_agent = models.CharField(max_length=50)  # Employee who made the sale
     transport_required = models.BooleanField(default=False)  # Delivery needed (checkbox)
 
+    def clean(self):
+        """
+        Custom validation for Sale model
+        - Prevents future date sales
+        - Ensures quantity is positive
+        """
+        super().clean()
+        
+        # Validate date is not in the future
+        if self.date and self.date > date.today():
+            raise ValidationError({
+                'date': 'Sale date cannot be in the future. Please select today\'s date or an earlier date.'
+            })
+        
+        # Validate quantity is positive
+        if self.quantity is not None and self.quantity <= 0:
+            raise ValidationError({
+                'quantity': 'Quantity must be greater than 0. Please enter a positive number.'
+            })
+
     def save(self, *args, **kwargs):
         """
         Auto-generate product_id for sales if not provided
+        Auto-populate foreign key if legacy fields are used
         Format: SALE-YYYYMMDD-XXXX (e.g., SALE-20251229-0001)
         """
+        # Run validation before saving
+        self.full_clean()
+        
+        # Auto-populate foreign key from legacy fields (backward compatibility)
+        if not self.product_ref and self.product_name and self.product_type:
+            try:
+                self.product_ref = Product.objects.get(name=self.product_name, product_type=self.product_type)
+            except Product.DoesNotExist:
+                # Create product if it doesn't exist (for legacy data)
+                self.product_ref = Product.objects.create(
+                    name=self.product_name,
+                    product_type=self.product_type,
+                    description=f"Auto-created from Sale record"
+                )
+        
         if not self.product_id:
             # Get current date for ID formatting
             date_str = datetime.now().strftime('%Y%m%d')
@@ -85,9 +157,16 @@ class Stock(models.Model):
 
     # Product identification and basic info
     product_id = models.CharField(max_length=50, blank=True, unique=True)  # Auto-generated unique identifier
+    
+    # NEW: Foreign Key to Product model (better approach)
+    product_ref = models.ForeignKey(Product, on_delete=models.PROTECT, null=True, blank=True,
+                                   help_text="Select product from catalog")
+    
     date = models.DateField()  # Date when item was added to inventory
-    product_name = models.TextField(choices=CUSTOMER_CHOICES)  # Product category
-    product_type = models.CharField(max_length=20, choices=PRODUCT_TYPE_CHOICES)  # Specific type within category
+    
+    # LEGACY: Product details (keeping for backward compatibility during migration)
+    product_name = models.TextField(choices=CUSTOMER_CHOICES, null=True, blank=True)  # Product category
+    product_type = models.CharField(max_length=20, choices=PRODUCT_TYPE_CHOICES, null=True, blank=True)  # Specific type within category
     
     # Inventory management
     quantity = models.IntegerField()  # Number of items available
@@ -100,19 +179,77 @@ class Stock(models.Model):
     # Additional details
     origin = models.CharField(max_length=20, choices=ORIGIN_CHOICES)  # Where the product came from
 
+    def clean(self):
+        """
+        Custom validation for Stock model
+        - Prevents future date stock entries
+        - Ensures quantity is positive
+        - Validates pricing is positive (if numeric)
+        """
+        super().clean()
+        
+        # Validate date is not in the future
+        if self.date and self.date > date.today():
+            raise ValidationError({
+                'date': 'Stock date cannot be in the future. Please select today\'s date or an earlier date.'
+            })
+        
+        # Validate quantity is positive
+        if self.quantity is not None and self.quantity <= 0:
+            raise ValidationError({
+                'quantity': 'Quantity must be greater than 0. Please enter a positive number.'
+            })
+        
+        # Validate cost and price are positive (if they contain numeric values)
+        if self.cost:
+            try:
+                cost_value = float(self.cost.replace(',', ''))  # Remove commas for validation
+                if cost_value <= 0:
+                    raise ValidationError({
+                        'cost': 'Cost must be greater than 0. Please enter a positive amount.'
+                    })
+            except (ValueError, AttributeError):
+                # If cost is not numeric, we'll allow it (for flexibility)
+                pass
+        
+        if self.price:
+            try:
+                price_value = float(self.price.replace(',', ''))  # Remove commas for validation
+                if price_value <= 0:
+                    raise ValidationError({
+                        'price': 'Price must be greater than 0. Please enter a positive amount.'
+                    })
+            except (ValueError, AttributeError):
+                # If price is not numeric, we'll allow it (for flexibility)
+                pass
+
     def save(self, *args, **kwargs):
         """
         Auto-generate product_id for stock items if not provided
-        Format: STK-CATEGORY-YYYYMMDD-XXXX (e.g., STK-SOFA-20251229-0001)
+        Auto-populate foreign key if legacy fields are used
+        Format: STK-YYYYMMDD-XXXX (e.g., STK-20251229-0001)
         """
+        # Auto-populate foreign key from legacy fields (backward compatibility)
+        if not self.product_ref and self.product_name and self.product_type:
+            try:
+                self.product_ref = Product.objects.get(name=self.product_name, product_type=self.product_type)
+            except Product.DoesNotExist:
+                # Create product if it doesn't exist (for legacy data)
+                self.product_ref = Product.objects.create(
+                    name=self.product_name,
+                    product_type=self.product_type,
+                    description=f"Auto-created from Stock record"
+                )
+        # Run validation before saving
+        self.full_clean()
+        
         if not self.product_id:
-            # Get current date and category for ID formatting
+            # Get current date for ID formatting
             date_str = datetime.now().strftime('%Y%m%d')
-            category = self.product_name.upper()[:3] if self.product_name else 'GEN'
             
-            # Find the latest stock ID for this category today
+            # Find the latest stock ID for today
             today_stocks = Stock.objects.filter(
-                product_id__startswith=f'STK-{category}-{date_str}'
+                product_id__startswith=f'STK-{date_str}'
             ).order_by('product_id').last()
             
             if today_stocks:
@@ -123,7 +260,7 @@ class Stock(models.Model):
                 new_seq = 1
             
             # Generate new product ID
-            self.product_id = f'STK-{category}-{date_str}-{new_seq:04d}'
+            self.product_id = f'STK-{date_str}-{new_seq:04d}'
         
         super().save(*args, **kwargs)
 

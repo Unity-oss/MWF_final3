@@ -29,8 +29,79 @@
             <p class="text-gray-600 mt-2">View sale information</p>
         </div>
         
-        <div class="readonly-form">
-            {% crispy form %}
+        <!-- IMPROVED: Clean template-based display instead of disabled form -->
+        <div class="bg-white p-6 rounded-lg shadow-sm">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Product ID -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Product ID</label>
+                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{{ sale.product_id }}</p>
+                </div>
+                
+                <!-- Customer Name -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Customer Name</label>
+                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{{ sale.customer_name }}</p>
+                </div>
+                
+                <!-- Product -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Product</label>
+                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                        {% if sale.product_ref %}
+                            {{ sale.product_ref }}
+                        {% else %}
+                            {{ sale.product_name }} ({{ sale.product_type }})
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <!-- Quantity -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Quantity</label>
+                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{{ sale.quantity }}</p>
+                </div>
+                
+                <!-- Date -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Sale Date</label>
+                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{{ sale.date }}</p>
+                </div>
+                
+                <!-- Payment Type -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Payment Type</label>
+                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{{ sale.payment_type }}</p>
+                </div>
+                
+                <!-- Sales Agent -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Sales Agent</label>
+                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{{ sale.sales_agent }}</p>
+                </div>
+                
+                <!-- Transport Required -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Transport Required</label>
+                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                        {% if sale.transport_required %}
+                            <span class="text-green-600"><i class="fas fa-check-circle mr-1"></i>Yes</span>
+                        {% else %}
+                            <span class="text-red-600"><i class="fas fa-times-circle mr-1"></i>No</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="mt-6 flex space-x-3">
+                <a href="/editSale/{{ sale.id }}" class="btn bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-edit mr-2"></i>Edit Sale
+                </a>
+                <a href="/saleRecord/" class="btn bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Sales
+                </a>
+            </div>
         </div>
     </div>
 {% endblock %}

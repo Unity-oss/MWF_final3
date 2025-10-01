@@ -2,17 +2,22 @@
 MAYONDO FURNITURE MANAGEMENT SYSTEM - VIEWS
 ==================================================
 
-This file contains all the view functions that handle user requests and responses
-for the Mayondo Furniture Management System.
+This file contains ALL the view functions that handle user requests and responses
+for the Mayondo Furniture Management System. All views are consolidated here
+for better maintainability and organization.
 
 Main Features:
-- User authentication (login/logout)
+- User authentication (login/logout) 
 - Dashboard with real-time statistics
 - Sales management (CRUD operations)
 - Stock management (CRUD operations)  
-- Reporting system
+- Reporting system with role-based access
 - User management for managers
 - Notification system
+- Foreign key relationships for better performance
+- Proper Django authentication with @login_required
+
+Note: Previously had views_crispy.py but consolidated everything here for cleaner architecture.
 """
 
 # Django core imports
@@ -28,7 +33,7 @@ from functools import wraps
 
 # Local application imports
 from home.models import Sale, Stock, Notification
-from .forms import SaleForm, StockForm, SaleViewForm, StockViewForm
+from .forms import SaleForm, StockForm
 
 # ===== SECURITY DECORATORS =====
 # Decorator to restrict access to managers only
@@ -49,30 +54,31 @@ def manager_required(view_func):
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
-# Decorator to restrict direct URL access
-def restrict_direct_access(view_func):
+# IMPROVED: Use Django's built-in authentication instead of referer checking
+from django.contrib.auth.decorators import login_required, user_passes_test
+
+# Helper functions for role-based access
+def is_employee_or_manager(user):
+    """Check if user is authenticated and in Employee or Manager group"""
+    return user.is_authenticated and user.groups.filter(name__in=['Manager', 'Employee']).exists()
+
+def is_manager_only(user):
+    """Check if user is authenticated and in Manager group only"""
+    return user.is_authenticated and user.groups.filter(name='Manager').exists()
+
+# DEPRECATED: Old referer checking (keeping for reference)
+# This approach was unreliable and has been replaced with @login_required
+def restrict_direct_access_OLD(view_func):
     """
-    Security decorator to prevent unauthorized direct URL access
-    Checks if the request came from an allowed host (same domain)
-    Redirects to login if accessed directly from external source
+    DEPRECATED: This decorator used unreliable referer checking
+    Use @login_required instead for proper authentication
     """
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
-        # Get the referring URL (where the request came from)
-        referer = request.META.get('HTTP_REFERER', '')
-        allowed_hosts = [request.get_host()]  # Only allow same domain
-        
-        if referer:
-            # Parse the referring URL to check its host
-            from urllib.parse import urlparse
-            referer_host = urlparse(referer).netloc
-            if referer_host not in allowed_hosts:
-                return redirect('login')  # External access - redirect to login
-        else:
-            # No referer means direct access - redirect to login
-            return redirect('login')
-        
-        # If security check passes, execute the original view
+        # This approach was problematic because:
+        # - HTTP_REFERER can be spoofed or missing
+        # - Breaks legitimate bookmarks/direct links
+        # - Not reliable across different browsers
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
@@ -135,7 +141,8 @@ def logoutPage(request):
 
 
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 def dashBoard(request):
 
     # Restrict direct URL access: only allow navigation via internal links
@@ -163,37 +170,54 @@ def dashBoard(request):
     total_revenue = 0
     for sale in Sale.objects.all():
         try:
-            # Try to get the stock item to calculate revenue (case-insensitive match)
-            stock_item = Stock.objects.get(product_name__iexact=sale.product_name, product_type__iexact=sale.product_type)
-            # Convert price from CharField to float and multiply by quantity
-            unit_price = float(stock_item.price) if stock_item.price else 0
-            sale_amount = unit_price * sale.quantity
+            # IMPROVED: Use foreign key relationship for better performance
+            if sale.product_ref:
+                stock_item = Stock.objects.filter(product_ref=sale.product_ref).first()
+            else:
+                # FALLBACK: Legacy string matching during migration period
+                stock_item = Stock.objects.filter(product_name__iexact=sale.product_name, product_type__iexact=sale.product_type).first()
             
-            # Add 5% transport fee if transport is required
-            if sale.transport_required:
-                transport_fee = sale_amount * 0.05  # 5% transport fee
-                sale_amount += transport_fee
-            
-            total_revenue += sale_amount
-        except (Stock.DoesNotExist, ValueError, TypeError):
-            # Handle cases where stock doesn't exist or price can't be converted to float
+            if stock_item:
+                # Convert price from CharField to float and multiply by quantity
+                unit_price = float(stock_item.price) if stock_item.price else 0
+                sale_amount = unit_price * sale.quantity
+                
+                # Add 5% transport fee if transport is required
+                if sale.transport_required:
+                    transport_fee = sale_amount * 0.05  # 5% transport fee
+                    sale_amount += transport_fee
+                
+                total_revenue += sale_amount
+        except (ValueError, TypeError):
+            # Handle cases where price can't be converted to float
             continue
 
     # Enrich sales data with amount calculations including transport fees
     sales_with_amounts = []
     for sale in Sale.objects.all().order_by('-date'):
         try:
-            stock_item = Stock.objects.get(product_name__iexact=sale.product_name, product_type__iexact=sale.product_type)
-            unit_price = float(stock_item.price) if stock_item.price else 0
-            total_amount = unit_price * sale.quantity
+            # IMPROVED: Use foreign key relationship (much faster and more reliable)
+            if sale.product_ref:
+                # Use foreign key relationship - direct and efficient
+                stock_item = Stock.objects.filter(product_ref=sale.product_ref).first()
+            else:
+                # FALLBACK: For legacy records without foreign key (during migration period)
+                stock_item = Stock.objects.filter(product_name__iexact=sale.product_name, product_type__iexact=sale.product_type).first()
             
-            # Calculate transport fee (5% if transport required)
-            transport_fee = 0
-            if sale.transport_required:
-                transport_fee = total_amount * 0.05
-                total_amount += transport_fee
+            if stock_item:
+                unit_price = float(stock_item.price) if stock_item.price else 0
+                total_amount = unit_price * sale.quantity
                 
-        except (Stock.DoesNotExist, ValueError, TypeError):
+                # Calculate transport fee (5% if transport required)
+                transport_fee = 0
+                if sale.transport_required:
+                    transport_fee = total_amount * 0.05
+                    total_amount += transport_fee
+            else:
+                total_amount = 0
+                transport_fee = 0
+                
+        except (ValueError, TypeError):
             total_amount = 0
             transport_fee = 0
         
@@ -232,7 +256,8 @@ def dashBoard(request):
 
 
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 def activityFeed(request):
     # If user is a manager, show all notifications for all managers
     if request.user.groups.filter(name="Manager").exists():
@@ -256,7 +281,8 @@ def activityFeed(request):
 # Mark notification as read
 @csrf_exempt
 @require_POST
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 def mark_notification_read(request):
     import json
     data = json.loads(request.body)
@@ -269,19 +295,45 @@ def mark_notification_read(request):
     except Notification.DoesNotExist:
         return JsonResponse({"success": False, "error": "Not found"}, status=404)
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
+@csrf_exempt
+def mark_all_notifications_read(request):
+    if request.method == "POST":
+        # Mark all unread notifications for the current user as read
+        updated_count = Notification.objects.filter(
+            user=request.user, is_read=False
+        ).update(is_read=True)
+        
+        return JsonResponse({"success": True, "updated_count": updated_count})
+    
+    return JsonResponse({"success": False, "error": "Invalid request method"}, status=405)
+
+@login_required
+@user_passes_test(is_employee_or_manager)
 def notifications(request):
-    notifications = Notification.objects.filter(
+    # Get only unread notifications for the modal
+    unread_notifications = Notification.objects.filter(
         user=request.user, is_read=False
-    ).order_by('-created_at')
+    ).order_by('-created_at')[:20]  # Limit to recent 20 notifications
+    
+    unread_count = unread_notifications.count()
+    
     data = [
-        {"message": n.message, "time": n.created_at.strftime("%H:%M")}
-        for n in notifications
+        {
+            "id": n.id,
+            "message": n.message, 
+            "time": n.created_at.isoformat(),  # Use ISO format for better JavaScript parsing
+            "activity_type": n.activity_type,
+            "is_read": n.is_read
+        }
+        for n in unread_notifications
     ]
-    return JsonResponse({"notifications": data, "count": notifications.count()})
+    return JsonResponse({"notifications": data, "count": unread_count})
 
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 def addUser(request):
     if request.method == 'POST':
         # You may need to adjust this logic to match your user creation form
@@ -300,7 +352,8 @@ def addUser(request):
     return render(request, "add_user.html")
 
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 @manager_required
 def report(request):
     if request.method == "POST":
@@ -315,7 +368,8 @@ def report(request):
             return render(request, 'gen_report.html', {'error': 'Invalid selection'})
     return render(request, 'gen_report.html')
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 @manager_required
 def sales_report(request):
     start_date = request.GET.get("start_date")
@@ -325,7 +379,8 @@ def sales_report(request):
         'end_date': end_date
     })
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 @manager_required
 def stock_report(request):
     start_date = request.GET.get("start_date")
@@ -335,7 +390,8 @@ def stock_report(request):
         'end_date': end_date
     })
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 def saleRecord(request):
     all_Sales = Sale.objects.all()
     context = {
@@ -343,7 +399,8 @@ def saleRecord(request):
     }
     return render(request, 'sales.html', context)
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 def generateReceipt(request, product_id):
     """
     Generate Receipt View - Creates printable receipt for a sale
@@ -353,18 +410,30 @@ def generateReceipt(request, product_id):
     
     # Calculate sale details including transport fee
     try:
-        stock_item = Stock.objects.get(product_name__iexact=sale.product_name, product_type__iexact=sale.product_type)
-        unit_price = float(stock_item.price) if stock_item.price else 0
-        subtotal = unit_price * sale.quantity
+        # IMPROVED: Use foreign key relationship for better performance and reliability
+        if sale.product_ref:
+            stock_item = Stock.objects.filter(product_ref=sale.product_ref).first()
+        else:
+            # FALLBACK: Legacy string matching during migration period
+            stock_item = Stock.objects.filter(product_name__iexact=sale.product_name, product_type__iexact=sale.product_type).first()
         
-        # Calculate transport fee (5% if required)
-        transport_fee = 0
-        if sale.transport_required:
-            transport_fee = subtotal * 0.05
+        if stock_item:
+            unit_price = float(stock_item.price) if stock_item.price else 0
+            subtotal = unit_price * sale.quantity
+            
+            # Calculate transport fee (5% if required)
+            transport_fee = 0
+            if sale.transport_required:
+                transport_fee = subtotal * 0.05
+            
+            total_amount = subtotal + transport_fee
+        else:
+            unit_price = 0
+            subtotal = 0
+            transport_fee = 0
+            total_amount = 0
         
-        total_amount = subtotal + transport_fee
-        
-    except (Stock.DoesNotExist, ValueError, TypeError):
+    except (ValueError, TypeError):
         unit_price = 0
         subtotal = 0
         transport_fee = 0
@@ -384,7 +453,8 @@ def generateReceipt(request, product_id):
     
     return render(request, 'receipt.html', context)
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 def addSale(request):
     """
     Add Sale View - Creates new sales records with stock validation
@@ -401,7 +471,12 @@ def addSale(request):
             
             # Validate stock availability before creating sale (case-insensitive match)
             try:
-                stock_item = Stock.objects.get(product_name__iexact=product_name, product_type__iexact=product_type)
+                # Use filter().first() to handle multiple stock items with same name/type
+                stock_item = Stock.objects.filter(product_name__iexact=product_name, product_type__iexact=product_type).first()
+                if not stock_item:
+                    messages.error(request, f'Stock item not found for {product_name} - {product_type}!')
+                    return render(request, 'add_sale.html', {'form': form})
+                
                 if stock_item.quantity < quantity_to_sell:
                     messages.error(request, f'Insufficient stock for {product_name} - {product_type}! Available: {stock_item.quantity}, Requested: {quantity_to_sell}')
                     return render(request, 'add_sale.html', {'form': form})
@@ -439,7 +514,8 @@ def addSale(request):
     
     return render(request, 'add_sale.html', {'form': form})
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 def editSale(request, product_id):
     sale_to_edit = get_object_or_404(Sale, id=product_id)
     if request.method == 'POST':
@@ -458,17 +534,19 @@ def editSale(request, product_id):
     
     return render(request, 'edit_sale.html', context)
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 def viewSingleSale(request, product_id):
-    selected = get_object_or_404(Sale, id=product_id)
-    form = SaleViewForm(instance=selected)
-    context = {
-        'selected': selected,
-        'form': form
-    }
+    """
+    IMPROVED: View sale details without unnecessary form overhead
+    Just display the data cleanly - no form needed for view-only content
+    """
+    sale = get_object_or_404(Sale, id=product_id)
+    context = {'sale': sale}  # Simple and clean - no form needed!
     return render(request, 'view_sale.html', context)
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 def updateSale(request, product_id):
     sale_to_update = get_object_or_404(Sale, id=product_id)
     if request.method == 'POST':
@@ -483,7 +561,8 @@ def updateSale(request, product_id):
     return render(request, 'update_sale.html', context)
 
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 def deleteSale(request, product_id):
     sale_to_delete = get_object_or_404(Sale, id=product_id)
     if request.method == 'POST':
@@ -499,7 +578,8 @@ def deleteSale(request, product_id):
 
 
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 @manager_required
 def saleReport(request):
     all_Sale = Sale.objects.all()
@@ -509,7 +589,8 @@ def saleReport(request):
     }
     return render(request, "sales_report.html", context)
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 def stockRecord(request):
     all_Stocks = Stock.objects.all()
     context = {
@@ -517,7 +598,8 @@ def stockRecord(request):
     }
     return render(request, 'stock.html', context)
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 def addStock(request):
     if request.method == 'POST':
         form = StockForm(request.POST)
@@ -538,7 +620,8 @@ def addStock(request):
     
     return render(request, 'add_stock.html', {'form': form})
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 def editStock(request, product_id):
     stock_to_edit = get_object_or_404(Stock, id=product_id)
     if request.method == 'POST':
@@ -557,17 +640,19 @@ def editStock(request, product_id):
     
     return render(request, 'edit_stock.html', context)
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 def viewSingleStock(request, product_id):
-    selected = get_object_or_404(Stock, id=product_id)
-    form = StockViewForm(instance=selected)
-    context = {
-        'selected': selected,
-        'form': form
-    }
+    """
+    IMPROVED: View stock details without unnecessary form overhead
+    Just display the data cleanly - no form needed for view-only content
+    """
+    stock = get_object_or_404(Stock, id=product_id)
+    context = {'stock': stock}  # Simple and clean - no form needed!
     return render(request, 'view_stock.html', context)
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 def deleteStock(request, product_id):
     stock_to_delete = get_object_or_404(Stock, id=product_id)
     if request.method == 'POST':
@@ -580,7 +665,8 @@ def deleteStock(request, product_id):
     return render(request, 'confirm_delete_stock.html', context)
     
 
-@restrict_direct_access
+@login_required
+@user_passes_test(is_employee_or_manager)
 def updateStock(request, product_id):
     stock_to_update = get_object_or_404(Stock, id=product_id)
     if request.method == 'POST':
