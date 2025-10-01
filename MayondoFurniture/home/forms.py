@@ -224,5 +224,53 @@ class StockForm(forms.ModelForm):
         # All styling and layout is now handled by template snippets
 
 
+# Login Form for enhanced validation and error handling
+class LoginForm(forms.Form):
+    """
+    Login Form - Handles user authentication with proper validation
+    """
+    username = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-cordes-dark focus:border-transparent outline-none transition duration-150 ease-in-out text-lg',
+            'placeholder': 'Enter your username',
+            'autocomplete': 'username'
+        }),
+        error_messages={
+            'required': 'Username is required.',
+            'max_length': 'Username cannot exceed 150 characters.'
+        }
+    )
+    
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-cordes-dark focus:border-transparent outline-none transition duration-150 ease-in-out text-lg',
+            'placeholder': 'Enter your password',
+            'autocomplete': 'current-password',
+            'minlength': '6'
+        }),
+        error_messages={
+            'required': 'Password is required.'
+        }
+    )
+    
+    ROLE_CHOICES = [
+        ('', 'Select your role'),
+        ('Manager', 'Manager'),
+        ('Employee', 'Employee'),
+    ]
+    
+    role = forms.ChoiceField(
+        choices=ROLE_CHOICES,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-cordes-dark focus:border-transparent outline-none transition duration-150 ease-in-out text-lg'
+        }),
+        error_messages={
+            'required': 'Please select your role.',
+            'invalid_choice': 'Please select a valid role.'
+        }
+    )
+
+
 # ✅ Forms are now clean and focus only on validation logic
 # HTML layouts and styling are handled by template snippets for better separation of concerns

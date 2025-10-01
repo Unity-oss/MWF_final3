@@ -110,20 +110,38 @@ def loginPage(request):
         password = request.POST.get("password")
         role = request.POST.get("role")  # Manager or Employee role selection
 
+        # Validate required fields
+        if not username or not password or not role:
+            messages.error(request, "Please fill in all required fields.")
+            return render(request, "login.html")
+
         # Attempt to authenticate user
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
+            # Check if user account is active
+            if not user.is_active:
+                messages.error(request, "Your account has been deactivated. Please contact an administrator.")
+                return render(request, "login.html")
+            
             # Verify user belongs to the selected role group
             if user.groups.filter(name=role).exists():
                 login(request, user)  # Start user session
+                messages.success(request, f"Welcome back, {user.get_full_name() or user.username}!")
                 return redirect("dashboard")  # Successful login - go to dashboard
             else:
-                messages.error(request, "You are not authorized as this role.")
-                return redirect("login")
+                messages.error(request, f"Access denied. You are not authorized for the '{role}' role. Please check your role selection or contact an administrator.")
+                return render(request, "login.html")
         else:
-            messages.error(request, "Invalid username or password.")
-            return redirect("login")
+            # Check if username exists to provide more specific error
+            from django.contrib.auth.models import User
+            try:
+                existing_user = User.objects.get(username=username)
+                messages.error(request, "Incorrect password. Please try again or contact an administrator if you've forgotten your password.")
+            except User.DoesNotExist:
+                messages.error(request, "Username not found. Please check your username or contact an administrator for account registration.")
+            
+            return render(request, "login.html")
 
     # GET request - display login form
     return render(request, "login.html")
