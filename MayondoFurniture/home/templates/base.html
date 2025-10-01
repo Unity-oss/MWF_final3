@@ -192,6 +192,45 @@ document.addEventListener('click', function(e) {
     });
   }
 });
+
+// Security: Prevent back button access after logout
+{% if user.is_authenticated %}
+(function() {
+    // Disable browser caching for authenticated pages
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted || window.performance && window.performance.navigation.type === 2) {
+            // Force page reload if accessed via back button
+            window.location.reload();
+        }
+    });
+
+    // Clear history on logout
+    function clearBrowserHistory() {
+        if (typeof(history.pushState) !== "undefined") {
+            history.pushState(null, null, window.location.href);
+            window.addEventListener('popstate', function() {
+                history.pushState(null, null, window.location.href);
+            });
+        }
+    }
+    
+    // Apply history clearing
+    clearBrowserHistory();
+    
+    // Monitor for logout and clear sensitive data
+    window.addEventListener('beforeunload', function() {
+        // Clear any sensitive data from memory
+        if (window.performance && window.performance.clearResourceTimings) {
+            window.performance.clearResourceTimings();
+        }
+    });
+})();
+{% endif %}
+
+// Global security headers check
+if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    console.warn('⚠️ Security Warning: This application should be served over HTTPS in production.');
+}
 </script>
 
 </body>

@@ -25,6 +25,9 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
+from django.views.decorators.cache import never_cache, cache_control
+from django.views.decorators.csrf import csrf_protect
+from functools import wraps
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.db import models
@@ -65,6 +68,30 @@ def is_employee_or_manager(user):
 def is_manager_only(user):
     """Check if user is authenticated and in Manager group only"""
     return user.is_authenticated and user.groups.filter(name='Manager').exists()
+
+
+def secure_view(view_func):
+    """
+    Decorator that combines authentication and cache control
+    Prevents back button access after logout
+    """
+    @wraps(view_func)
+    @never_cache
+    @cache_control(no_cache=True, must_revalidate=True, no_store=True)
+    def wrapper(request, *args, **kwargs):
+        # Add security headers to response
+        response = view_func(request, *args, **kwargs)
+        
+        # Ensure response has proper headers to prevent caching
+        if hasattr(response, '__setitem__'):
+            response['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+            response['Pragma'] = 'no-cache'
+            response['Expires'] = '0'
+            response['X-Frame-Options'] = 'DENY'  # Prevent clickjacking
+            
+        return response
+    return wrapper
+
 
 # DEPRECATED: Old referer checking (keeping for reference)
 # This approach was unreliable and has been replaced with @login_required
@@ -147,18 +174,36 @@ def loginPage(request):
     return render(request, "login.html")
 
 
+@never_cache
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def logoutPage(request):
     """
-    Logout Page View - Handles user logout
-    Terminates user session and displays logout confirmation page
+    Secure Logout View - Handles user logout with proper cache control
+    Prevents browser back button access after logout
     """
-    # Terminate user session
+    # Terminate user session completely
     logout(request)
-    messages.success(request, 'You have been logged out successfully.')
-    return render(request, "logout.html")
+    
+    # Clear all session data
+    request.session.flush()
+    
+    # Add security message
+    messages.success(request, 'You have been logged out successfully. For security, please close your browser.')
+    
+    # Create response with strict cache control headers
+    response = render(request, "logout.html")
+    
+    # Prevent caching of any authenticated pages
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    
+    return response
 
 
 
+@never_cache
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 @login_required
 @user_passes_test(is_employee_or_manager)
 def dashBoard(request):
@@ -386,16 +431,48 @@ def report(request):
             return render(request, 'gen_report.html', {'error': 'Invalid selection'})
     return render(request, 'gen_report.html')
 
+@secure_view
 @login_required
 @user_passes_test(is_employee_or_manager)
 @manager_required
 def sales_report(request):
+    """
+    Sales Report View (Reports Section) - Enhanced with data filtering
+    Shows all sales with date filtering and manager information
+    """
+    from django.contrib.auth.models import User
+    from datetime import date
+    
+    # Get filter parameters
     start_date = request.GET.get("start_date")
     end_date = request.GET.get("end_date")
-    return render(request, 'sales_report.html', {
+    
+    # Get all sales, apply date filters if provided
+    all_sales = Sale.objects.all().order_by('-date')
+    
+    if start_date:
+        all_sales = all_sales.filter(date__gte=start_date)
+    if end_date:
+        all_sales = all_sales.filter(date__lte=end_date)
+    
+    # Get current user's manager info or first available manager
+    current_manager = request.user
+    if not current_manager.groups.filter(name='Manager').exists():
+        # If current user is not manager, get first available manager
+        managers = User.objects.filter(groups__name='Manager').first()
+        current_manager = managers if managers else request.user
+    
+    context = {
+        'sales': all_sales,
         'start_date': start_date,
-        'end_date': end_date
-    })
+        'end_date': end_date,
+        'manager_name': current_manager.get_full_name() or current_manager.username,
+        'report_date': date.today(),
+        'total_sales': all_sales.count(),
+        'is_filtered': bool(start_date or end_date)
+    }
+    
+    return render(request, 'sales_report.html', context)
 
 @login_required
 @user_passes_test(is_employee_or_manager)
@@ -408,6 +485,7 @@ def stock_report(request):
         'end_date': end_date
     })
 
+@secure_view
 @login_required
 @user_passes_test(is_employee_or_manager)
 def saleRecord(request):
@@ -471,6 +549,7 @@ def generateReceipt(request, product_id):
     
     return render(request, 'receipt.html', context)
 
+@secure_view
 @login_required
 @user_passes_test(is_employee_or_manager)
 def addSale(request):
@@ -596,15 +675,47 @@ def deleteSale(request, product_id):
 
 
 
+@secure_view
 @login_required
 @user_passes_test(is_employee_or_manager)
 @manager_required
 def saleReport(request):
-    all_Sale = Sale.objects.all()
-
+    """
+    Sales Report View (Sales Section) - Enhanced to match reports section
+    Shows all sales with manager information and generation date
+    """
+    from django.contrib.auth.models import User
+    from datetime import date
+    
+    # Get filter parameters (if any)
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
+    
+    # Get all sales, apply date filters if provided
+    all_sales = Sale.objects.all().order_by('-date')
+    
+    if start_date:
+        all_sales = all_sales.filter(date__gte=start_date)
+    if end_date:
+        all_sales = all_sales.filter(date__lte=end_date)
+    
+    # Get current user's manager info or first available manager
+    current_manager = request.user
+    if not current_manager.groups.filter(name='Manager').exists():
+        # If current user is not manager, get first available manager
+        managers = User.objects.filter(groups__name='Manager').first()
+        current_manager = managers if managers else request.user
+    
     context = {
-        "sales": all_Sale
+        'sales': all_sales,
+        'start_date': start_date,
+        'end_date': end_date,
+        'manager_name': current_manager.get_full_name() or current_manager.username,
+        'report_date': date.today(),
+        'total_sales': all_sales.count(),
+        'is_filtered': bool(start_date or end_date)
     }
+    
     return render(request, "sales_report.html", context)
 
 @login_required

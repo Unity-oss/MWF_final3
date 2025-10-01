@@ -5,8 +5,91 @@
 {% block extra_head %}
   <style>
     @media print {
-      .print-btn {
+      /* Hide all base template elements */
+      .print-btn,
+      header,
+      nav,
+      footer,
+      .no-print,
+      body > header,
+      body > nav, 
+      body > footer {
         display: none !important;
+      }
+      
+      /* Hide any navigation or header elements */
+      .bg-cordes-dark,
+      [role="navigation"],
+      .logo {
+        display: none !important;
+      }
+      
+      /* Reset body for clean printing */
+      body {
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-family: Arial, sans-serif !important;
+      }
+      
+      /* Page setup for professional printing */
+      @page {
+        margin: 0.75in;
+        size: A4;
+      }
+      
+      /* Optimize report container for printing */
+      .max-w-screen-2xl {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 20px !important;
+        box-shadow: none !important;
+      }
+      
+      /* Optimize table for printing */
+      table {
+        font-size: 11px !important;
+        border-collapse: collapse !important;
+        width: 100% !important;
+      }
+      
+      /* Ensure table borders print well */
+      th, td {
+        border: 1px solid #000 !important;
+        padding: 6px !important;
+      }
+      
+      /* Make headers stand out */
+      th {
+        background: #f0f0f0 !important;
+        font-weight: bold !important;
+      }
+      
+      /* Optimize header table */
+      .border-black {
+        border-color: #000 !important;
+      }
+      
+      /* Hide any unnecessary elements */
+      .text-cordes-dark,
+      .bg-gray-100 {
+        color: #000 !important;
+        background: #f0f0f0 !important;
+      }
+      
+      /* Override any flex properties from base template */
+      .flex,
+      .flex-col,
+      .min-h-screen {
+        display: block !important;
+        min-height: auto !important;
+      }
+      
+      /* Ensure main content area takes full space */
+      main {
+        flex: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
       }
     }
     
@@ -23,28 +106,42 @@
     <!-- Print button -->
     <button class="print-btn absolute top-5 right-5 px-4 py-2 bg-cordes-dark text-white border-0 rounded cursor-pointer hover:bg-cordes-blue transition-colors" onclick="window.print()">🖨️ Print Report</button>
 
-    <!-- First Table -->
+    <!-- Report Header Table -->
     <div class="mt-16 mb-8">
       <table class="border-collapse w-full max-w-md">
         <caption class="font-bold mb-3 text-left text-lg">SALES REPORT</caption>
         <thead class="bg-gray-100">
           <tr>
-            <th class="border border-black p-2 text-left">SalesPerson</th>
-            <th class="border border-black p-2 text-left">Date</th>
+            <th class="border border-black p-2 text-left">Manager</th>
+            <th class="border border-black p-2 text-left">Report Generated</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td class="border border-black p-2 editable-cell" contenteditable="true" data-placeholder="Tusiime George"></td>
-            <td class="border border-black p-2 editable-cell" contenteditable="true" data-placeholder="02/02/2025"></td>
+            <td class="border border-black p-2 font-medium text-gray-800">{{ manager_name }}</td>
+            <td class="border border-black p-2 text-gray-700">{{ report_date|date:"d/m/Y" }}</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Third Table -->
+    <!-- Filter Information (if filters applied) -->
+    {% if is_filtered %}
+    <div class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+      <h3 class="font-semibold text-blue-800 mb-2">Applied Filters:</h3>
+      <div class="text-sm text-blue-700">
+        {% if start_date %}<span class="mr-4">From: {{ start_date }}</span>{% endif %}
+        {% if end_date %}<span class="mr-4">To: {{ end_date }}</span>{% endif %}
+        <span class="font-medium">Total Records: {{ total_sales }}</span>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Sales Data Table -->
     <section class="w-full mt-10">
-      <h2 class="text-xl font-semibold mb-4 text-gray-800">Sales</h2>
+      <h2 class="text-xl font-semibold mb-4 text-gray-800">
+        Sales Records
+      </h2>
       <table class="w-full border-collapse">
         <thead>
           <tr class="bg-gray-100">
@@ -62,17 +159,41 @@
         {% for sale in sales %}
         <tr class="hover:bg-gray-50">
           <td class="p-3 border-b border-gray-200">{{ sale.customer_name }}</td>
-          <td class="p-3 border-b border-gray-200">{{ sale.product_name }}</td>
-          <td class="p-3 border-b border-gray-200">{{ sale.product_type }}</td>
+          <td class="p-3 border-b border-gray-200">
+            {% if sale.product_ref %}
+              {{ sale.product_ref.product_name }}
+            {% else %}
+              {{ sale.product_name|default:"N/A" }}
+            {% endif %}
+          </td>
+          <td class="p-3 border-b border-gray-200">
+            {% if sale.product_ref %}
+              {{ sale.product_ref.product_type }}
+            {% else %}
+              {{ sale.product_type|default:"N/A" }}
+            {% endif %}
+          </td>
           <td class="p-3 border-b border-gray-200">{{ sale.quantity }}</td>
-          <td class="p-3 border-b border-gray-200">{{ sale.date }}</td>
+          <td class="p-3 border-b border-gray-200">{{ sale.date|date:"d/m/Y" }}</td>
           <td class="p-3 border-b border-gray-200">{{ sale.payment_type }}</td>
           <td class="p-3 border-b border-gray-200">{{ sale.sales_agent }}</td>
-          <td class="p-3 border-b border-gray-200">{{ sale.transport_required|yesno:"Yes,No" }}</td>
+          <td class="p-3 border-b border-gray-200">
+            <span class="px-2 py-1 rounded-full text-xs font-medium {% if sale.transport_required %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+              {{ sale.transport_required|yesno:"Yes,No" }}
+            </span>
+          </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="8" class="p-3 border-b border-gray-200 text-center text-gray-500">No items yet. Add one</td>
+          <td colspan="8" class="p-3 border-b border-gray-200 text-center text-gray-500">
+            <div class="py-4">
+              <i class="fas fa-inbox text-gray-400 text-2xl mb-2"></i>
+              <p class="text-gray-500">No sales records found{% if is_filtered %} for the selected date range{% endif %}.</p>
+              <a href="/addSale/" class="text-cordes-dark hover:text-cordes-blue mt-2 inline-block">
+                <i class="fas fa-plus mr-1"></i> Add your first sale
+              </a>
+            </div>
+          </td>
         </tr>
         {% endfor %}
       </tbody>

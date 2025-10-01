@@ -40,5 +40,83 @@
         <p class="m-0">&copy; Copyright 2025 - Mayondo Wood & Furniture. All rights reserved.</p>
         <p class="text-sm text-gray-300 mt-1">Designed by Unity</p>
     </footer>
+
+    <script>
+        // Security: Prevent back button access after logout
+        (function() {
+            // Clear browser history and prevent back navigation
+            if (typeof(history.pushState) !== "undefined") {
+                history.pushState(null, null, window.location.href);
+                history.pushState(null, null, window.location.href);
+                
+                window.addEventListener('popstate', function() {
+                    history.pushState(null, null, window.location.href);
+                });
+            }
+            
+            // Clear browser cache and storage
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    names.forEach(function(name) {
+                        caches.delete(name);
+                    });
+                });
+            }
+            
+            // Clear session storage
+            if (window.sessionStorage) {
+                sessionStorage.clear();
+            }
+            
+            // Clear local storage (be careful with this in production)
+            if (window.localStorage) {
+                // Only clear application-specific items
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.includes('mwf') || key.includes('auth') || key.includes('session'))) {
+                        keysToRemove.push(key);
+                    }
+                }
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+            }
+            
+            // Disable context menu and keyboard shortcuts
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            
+            document.addEventListener('keydown', function(e) {
+                // Disable F12, Ctrl+Shift+I, Ctrl+U, etc.
+                if (e.keyCode === 123 || 
+                    (e.ctrlKey && e.shiftKey && e.keyCode === 73) ||
+                    (e.ctrlKey && e.keyCode === 85)) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // Show security message
+            setTimeout(function() {
+                const securityNote = document.createElement('div');
+                securityNote.className = 'fixed bottom-4 right-4 bg-green-600 text-white p-3 rounded-lg shadow-lg max-w-sm';
+                securityNote.innerHTML = `
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="text-sm">Session cleared. Please close your browser for complete security.</span>
+                    </div>
+                `;
+                document.body.appendChild(securityNote);
+                
+                // Remove the message after 5 seconds
+                setTimeout(function() {
+                    securityNote.remove();
+                }, 5000);
+            }, 1000);
+        })();
+    </script>
 </body>
 </html>
