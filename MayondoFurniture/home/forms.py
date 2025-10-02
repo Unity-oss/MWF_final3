@@ -123,6 +123,12 @@ class SaleForm(forms.ModelForm):
         from datetime import date
         self.fields['date'].widget.attrs['max'] = date.today().strftime('%Y-%m-%d')
         
+        # Add required attributes for client-side validation
+        required_fields = ['customer_name', 'product_name', 'product_type', 'quantity', 'date', 'payment_type', 'sales_agent']
+        for field_name in required_fields:
+            if field_name in self.fields:
+                self.fields[field_name].widget.attrs['required'] = 'required'
+        
         # Minimal crispy form setup - all layout handled by templates
         self.helper = FormHelper()
         self.helper.form_method = 'post'
@@ -227,6 +233,12 @@ class StockForm(forms.ModelForm):
         # Set max date to today to prevent future dates
         from datetime import date
         self.fields['date'].widget.attrs['max'] = date.today().strftime('%Y-%m-%d')
+        
+        # Add required attributes for client-side validation
+        required_fields = ['product_name', 'product_type', 'quantity', 'date', 'supplier_name', 'cost', 'price', 'origin']
+        for field_name in required_fields:
+            if field_name in self.fields:
+                self.fields[field_name].widget.attrs['required'] = 'required'
         
         # Minimal crispy form setup - all layout handled by templates
         self.helper = FormHelper()

@@ -4,11 +4,140 @@ Usage: {% include 'snippets/form_actions.html' with submit_text='Save' cancel_ur
 {% endcomment %}
 
 <div class="form-actions mt-4">
-    <button type="submit" class="btn bg-cordes-dark text-white px-6 py-3 rounded-lg hover:bg-cordes-blue transition-colors mr-3">
+    <button type="submit" class="btn bg-cordes-dark text-white px-6 py-3 rounded-lg hover:bg-cordes-blue transition-colors mr-3" onclick="return validateForm()">
         {{ submit_text|default:"Save" }}
     </button>
     <a href="{{ cancel_url }}" class="btn bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
         Cancel
     </a>
 </div>
+
+<script>
+function validateForm() {
+    const form = document.querySelector('form.crispy-form');
+    const requiredFields = form.querySelectorAll('input[required], select[required], textarea[required]');
+    let hasErrors = false;
+    let firstErrorField = null;
+
+    console.log('Validating form, found', requiredFields.length, 'required fields');
+
+    // Clear previous custom error messages
+    document.querySelectorAll('.custom-error-message').forEach(el => el.remove());
+
+    requiredFields.forEach(field => {
+        // Better container detection for crispy forms
+        const fieldContainer = field.closest('.col-md-6') || field.closest('.col-md-4') || field.closest('.col-12') || field.closest('.form-group') || field.parentElement;
+        
+        // Check if field is empty (handle both select and input fields)
+        const isEmpty = (field.tagName === 'SELECT' && field.value === '') || (field.tagName !== 'SELECT' && !field.value.trim());
+        
+        console.log(`Field ${field.name} (${field.tagName}): value="${field.value}", isEmpty=${isEmpty}`);
+        
+        if (isEmpty) {
+            hasErrors = true;
+            if (!firstErrorField) firstErrorField = field;
+            
+            // Add red border to field
+            field.classList.add('border-red-500', 'bg-red-50');
+            
+            // Remove any existing custom error message for this field
+            const existingError = fieldContainer.querySelector('.custom-error-message');
+            if (existingError) existingError.remove();
+            
+            // Create and add error message
+            const errorMsg = document.createElement('p');
+            errorMsg.className = 'custom-error-message text-red-600 text-sm mt-1';
+            errorMsg.textContent = getFieldErrorMessage(field);
+            fieldContainer.appendChild(errorMsg);
+        } else {
+            // Remove error styling if field is filled
+            field.classList.remove('border-red-500', 'bg-red-50');
+            // Remove custom error message if field is now valid
+            const existingError = fieldContainer.querySelector('.custom-error-message');
+            if (existingError) existingError.remove();
+        }
+    });
+
+    if (hasErrors) {
+        // Show general error message
+        showGeneralErrorMessage('Please fill in all required fields');
+        
+        // Focus on first error field
+        if (firstErrorField) {
+            firstErrorField.focus();
+            firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        return false;
+    }
+
+    return true;
+}
+
+function getFieldErrorMessage(field) {
+    const fieldName = field.name;
+    const fieldType = field.tagName.toLowerCase();
+    
+    const messages = {
+        'customer_name': 'Customer name is required',
+        'product_name': 'Please select a product name',
+        'product_type': 'Please select a product type',
+        'quantity': 'Quantity is required',
+        'date': 'Date is required',
+        'payment_type': 'Please select payment method',
+        'sales_agent': 'Sales agent name is required',
+        'supplier_name': 'Supplier name is required',
+        'cost': 'Cost is required',
+        'price': 'Price is required',
+        'origin': 'Please select origin'
+    };
+    
+    return messages[fieldName] || 'This field is required';
+}
+
+function showGeneralErrorMessage(message) {
+    // Remove existing general error message
+    const existingError = document.querySelector('.general-form-error');
+    if (existingError) existingError.remove();
+    
+    // Create new error message
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'general-form-error mb-4 p-4 rounded-lg bg-red-100 border border-red-400 text-red-700';
+    errorDiv.innerHTML = `<strong>Error:</strong> ${message}`;
+    
+    // Insert at top of form
+    const form = document.querySelector('form.crispy-form');
+    form.insertBefore(errorDiv, form.firstChild);
+    
+    // Scroll to top
+    errorDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Add event listeners to clear errors when user starts typing
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form.crispy-form');
+    if (form) {
+        const fields = form.querySelectorAll('input, select, textarea');
+        fields.forEach(field => {
+            // Use both 'input' and 'change' events to handle dropdowns
+            ['input', 'change'].forEach(eventType => {
+                field.addEventListener(eventType, function() {
+                    // Clear custom error styling and messages when user interacts
+                    this.classList.remove('border-red-500', 'bg-red-50');
+                    
+                    // Find container and remove error message
+                    const container = this.closest('.col-md-6') || this.closest('.col-md-4') || this.closest('.col-12') || this.closest('.form-group') || this.parentElement;
+                    const errorMsg = container.querySelector('.custom-error-message');
+                    if (errorMsg) errorMsg.remove();
+                    
+                    // Clear general error message if it exists
+                    const generalError = document.querySelector('.general-form-error');
+                    if (generalError) generalError.remove();
+                });
+            });
+        });
+    }
+});
+</script>
+
 </div> {% comment %}Close the card div from header{% endcomment %}

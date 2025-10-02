@@ -2,13 +2,26 @@
 
 {% include 'snippets/form_card_header.html' with title='Stock Information' info='Product ID will be automatically generated based on category and date.' %}
 
+{# Display non-field errors #}
+{% if form.non_field_errors %}
+<div class="text-red-600 mb-4">
+    {{ form.non_field_errors }}
+</div>
+{% endif %}
+
     <!-- Product Selection (2 columns) -->
     <div class="form-row mb-4">
         <div class="col-md-6">
             {{ form.product_name|as_crispy_field }}
+            {% if form.product_name.errors %}
+                <p class="text-red-600 text-sm">{{ form.product_name.errors }}</p>
+            {% endif %}
         </div>
         <div class="col-md-6">
             {{ form.product_type|as_crispy_field }}
+            {% if form.product_type.errors %}
+                <p class="text-red-600 text-sm">{{ form.product_type.errors }}</p>
+            {% endif %}
         </div>
     </div>
 
@@ -16,9 +29,15 @@
     <div class="form-row mb-4">
         <div class="col-md-4">
             {{ form.quantity|as_crispy_field }}
+            {% if form.quantity.errors %}
+                <p class="text-red-600 text-sm">{{ form.quantity.errors }}</p>
+            {% endif %}
         </div>
         <div class="col-md-8">
             {{ form.date|as_crispy_field }}
+            {% if form.date.errors %}
+                <p class="text-red-600 text-sm">{{ form.date.errors }}</p>
+            {% endif %}
         </div>
     </div>
 
@@ -26,6 +45,9 @@
     <div class="form-row mb-4">
         <div class="col-12">
             {{ form.supplier_name|as_crispy_field }}
+            {% if form.supplier_name.errors %}
+                <p class="text-red-600 text-sm">{{ form.supplier_name.errors }}</p>
+            {% endif %}
         </div>
     </div>
 
@@ -33,12 +55,21 @@
     <div class="form-row mb-4">
         <div class="col-md-4">
             {{ form.cost|as_crispy_field }}
+            {% if form.cost.errors %}
+                <p class="text-red-600 text-sm">{{ form.cost.errors }}</p>
+            {% endif %}
         </div>
         <div class="col-md-4">
             {{ form.price|as_crispy_field }}
+            {% if form.price.errors %}
+                <p class="text-red-600 text-sm">{{ form.price.errors }}</p>
+            {% endif %}
         </div>
         <div class="col-md-4">
             {{ form.origin|as_crispy_field }}
+            {% if form.origin.errors %}
+                <p class="text-red-600 text-sm">{{ form.origin.errors }}</p>
+            {% endif %}
         </div>
     </div>
 
