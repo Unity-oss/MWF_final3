@@ -125,17 +125,7 @@
       </table>
     </div>
 
-    <!-- Filter Information (if filters applied) -->
-    {% if is_filtered %}
-    <div class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
-      <h3 class="font-semibold text-blue-800 mb-2">Applied Filters:</h3>
-      <div class="text-sm text-blue-700">
-        {% if start_date %}<span class="mr-4">From: {{ start_date }}</span>{% endif %}
-        {% if end_date %}<span class="mr-4">To: {{ end_date }}</span>{% endif %}
-        <span class="font-medium">Total Records: {{ total_sales }}</span>
-      </div>
-    </div>
-    {% endif %}
+
 
     <!-- Sales Data Table -->
     <section class="w-full mt-10">
@@ -160,18 +150,10 @@
         <tr class="hover:bg-gray-50">
           <td class="p-3 border-b border-gray-200">{{ sale.customer_name }}</td>
           <td class="p-3 border-b border-gray-200">
-            {% if sale.product_ref %}
-              {{ sale.product_ref.product_name }}
-            {% else %}
-              {{ sale.product_name|default:"N/A" }}
-            {% endif %}
+            {{ sale.product_name|default:"N/A" }}
           </td>
           <td class="p-3 border-b border-gray-200">
-            {% if sale.product_ref %}
-              {{ sale.product_ref.product_type }}
-            {% else %}
-              {{ sale.product_type|default:"N/A" }}
-            {% endif %}
+            {{ sale.product_type|default:"N/A" }}
           </td>
           <td class="p-3 border-b border-gray-200">{{ sale.quantity }}</td>
           <td class="p-3 border-b border-gray-200">{{ sale.date|date:"d/m/Y" }}</td>

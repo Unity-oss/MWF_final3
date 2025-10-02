@@ -3,88 +3,193 @@
 {% block title %}Stock Report - MWF{% endblock %}
 
 {% block extra_head %}
-    <style>
-      @media print {
-        .print-btn {
-          display: none !important;
-        }
+  <style>
+    @media print {
+      /* Hide all base template elements */
+      .print-btn,
+      header,
+      nav,
+      footer,
+      .no-print,
+      body > header,
+      body > nav, 
+      body > footer {
+        display: none !important;
       }
-    </style>
+      
+      /* Hide any navigation or header elements */
+      .bg-cordes-dark,
+      [role="navigation"],
+      .logo {
+        display: none !important;
+      }
+      
+      /* Reset body for clean printing */
+      body {
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-family: Arial, sans-serif !important;
+      }
+      
+      /* Page setup for professional printing */
+      @page {
+        margin: 0.75in;
+        size: A4;
+      }
+      
+      /* Optimize report container for printing */
+      .max-w-screen-2xl {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 20px !important;
+        box-shadow: none !important;
+      }
+      
+      /* Optimize table for printing */
+      table {
+        width: 100% !important;
+        font-size: 12px !important;
+      }
+      
+      th, td {
+        padding: 8px 4px !important;
+        border: 1px solid #000 !important;
+        font-size: 12px !important;
+      }
+      
+      th {
+        background-color: #f0f0f0 !important;
+        font-weight: bold !important;
+        color: #000 !important;
+      }
+      
+      tr {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+      
+      .bg-gray-100 th {
+        background: #f0f0f0 !important;
+        color: #000 !important;
+      }
+      
+      /* Style borders for better printing */
+      .border,
+      .border-black,
+      .border-gray-300 {
+        border: 1px solid #000 !important;
+        border-color: #000 !important;
+      }
+      
+      /* Hide any unnecessary elements */
+      .text-cordes-dark,
+      .bg-gray-100 {
+        color: #000 !important;
+        background: #f0f0f0 !important;
+      }
+      
+      /* Override any flex properties from base template */
+      .flex,
+      .flex-col,
+      .min-h-screen {
+        display: block !important;
+        min-height: auto !important;
+      }
+      
+      /* Ensure main content area takes full space */
+      main {
+        flex: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+    }
+    
+    .editable-cell:empty::before {
+      content: attr(data-placeholder);
+      color: #6b7280;
+      pointer-events: none;
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
-    <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-5 m-4 relative">
-      <div class="p-5">
-        <button class="print-btn absolute top-5 right-5 px-4 py-2 bg-cordes-dark text-white border-0 rounded cursor-pointer hover:bg-cordes-blue transition-colors" onclick="window.print()">
-          🖨️ Print Report
-        </button>
+  <div class="max-w-screen-2xl mx-auto bg-white rounded-lg p-5 relative shadow-lg">
+    <!-- Print button -->
+    <button class="print-btn absolute top-5 right-5 px-4 py-2 bg-cordes-dark text-white border-0 rounded cursor-pointer hover:bg-cordes-blue transition-colors" onclick="window.print()">🖨️ Print Report</button>
 
-        <h1 class="text-3xl font-bold text-gray-800 mb-6">Stock Report</h1>
-        
-        <div class="mb-6 space-y-2">
-          {% if start_date and end_date %}
-          <p class="text-gray-700">Showing results from {{ start_date }} to {{ end_date }}</p>
-          {% else %}
-          <p class="text-gray-500">No date range selected.</p>
-          {% endif %}
-
-          <p class="text-gray-700"><span class="font-semibold">Company name:</span> Mayondo Furniture Workshop</p>
-          <p class="text-gray-700"><span class="font-semibold">Date range:</span> {{ start_date }} to {{ End_date }}</p>
-          <p class="text-gray-700"><span class="font-semibold">Prepared by:</span> {{ preparers_name }}</p>
-          <p class="text-gray-700"><span class="font-semibold">Report date:</span> {{ Date_of_report }}</p>
-        </div>
-
-        <img src="#" alt="logo" class="mb-6 h-16 object-contain" />
-        <section class="overflow-x-auto">
-          <form action="" method="post">
-            <table class="w-full border-collapse bg-white shadow-sm">
-              <thead class="bg-gray-100">
-                <tr>
-                  <th class="px-4 py-3 text-left text-sm font-semibold text-gray-800 border border-gray-300">Product Name</th>
-                  <th class="px-4 py-3 text-left text-sm font-semibold text-gray-800 border border-gray-300">Cost Price</th>
-                  <th class="px-4 py-3 text-left text-sm font-semibold text-gray-800 border border-gray-300">Product Price</th>
-                  <th class="px-4 py-3 text-left text-sm font-semibold text-gray-800 border border-gray-300">Quantity</th>
-                  <th class="px-4 py-3 text-left text-sm font-semibold text-gray-800 border border-gray-300">Supplier Name</th>
-                  <th class="px-4 py-3 text-left text-sm font-semibold text-gray-800 border border-gray-300">Quality</th>
-                  <th class="px-4 py-3 text-left text-sm font-semibold text-gray-800 border border-gray-300">Color</th>
-                  <th class="px-4 py-3 text-left text-sm font-semibold text-gray-800 border border-gray-300">Measurements</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-200">
-                <tr class="hover:bg-gray-50 transition-colors">
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300 font-medium">1</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                </tr>
-                <tr class="hover:bg-gray-50 transition-colors">
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300 font-medium">2</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                </tr>
-                <tr class="hover:bg-gray-50 transition-colors">
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300 font-medium">3</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                  <td class="px-4 py-3 text-sm text-gray-900 border border-gray-300"></td>
-                </tr>
-              </tbody>
-            </table>
-          </form>
-        </section>
-      </div>
+    <!-- Report Header Table -->
+    <div class="mt-16 mb-8">
+      <table class="border-collapse w-full max-w-2xl">
+        <caption class="font-bold mb-3 text-left text-lg">STOCK REPORT</caption>
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="border border-black p-4 text-left w-1/2">Manager</th>
+            <th class="border border-black p-4 text-left w-1/2">Report Generated</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="border border-black p-4 font-medium text-gray-800">{{ manager_name }}</td>
+            <td class="border border-black p-4 text-gray-700">{{ report_date|date:"d/m/Y" }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
+
+    <!-- Stock Data Table -->
+    <section class="w-full mt-10">
+      <h2 class="text-xl font-semibold mb-4 text-gray-800">
+        Stock Records
+      </h2>
+      <table class="w-full border-collapse">
+        <thead>
+          <tr class="bg-gray-100">
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Product Name</th>
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Type</th>
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Qty</th>
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Date Added</th>
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Supplier</th>
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Cost (UGX)</th>
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Price (UGX)</th>
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Origin</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for stock in stocks %}
+        <tr class="hover:bg-gray-50">
+          <td class="p-3 border-b border-gray-200">
+            {{ stock.product_name|default:"N/A" }}
+          </td>
+          <td class="p-3 border-b border-gray-200">
+            {{ stock.product_type|default:"N/A" }}
+          </td>
+          <td class="p-3 border-b border-gray-200">{{ stock.quantity }}</td>
+          <td class="p-3 border-b border-gray-200">{{ stock.date|date:"d/m/Y" }}</td>
+          <td class="p-3 border-b border-gray-200">{{ stock.supplier_name }}</td>
+          <td class="p-3 border-b border-gray-200">{{ stock.cost }}</td>
+          <td class="p-3 border-b border-gray-200">{{ stock.price }}</td>
+          <td class="p-3 border-b border-gray-200">
+            <span class="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              {{ stock.origin }}
+            </span>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="p-3 border-b border-gray-200 text-center text-gray-500">
+            <div class="py-4">
+              <i class="fas fa-boxes text-gray-400 text-2xl mb-2"></i>
+              <p class="text-gray-500">No stock records found{% if is_filtered %} for the selected date range{% endif %}.</p>
+              <a href="/addStock/" class="text-cordes-dark hover:text-cordes-blue mt-2 inline-block">
+                <i class="fas fa-plus mr-1"></i> Add your first stock item
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      </table>
+    </section>
+  </div>
 {% endblock %}

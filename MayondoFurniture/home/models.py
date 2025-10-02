@@ -56,16 +56,20 @@ class Sale(models.Model):
     # Product identification - auto-generated unique ID
     product_id = models.CharField(max_length=50, blank=True, unique=True)
     
-    # NEW: Foreign Key to Product model (better approach)
-    product_ref = models.ForeignKey(Product, on_delete=models.PROTECT, null=True, blank=True, 
-                                   help_text="Select product from catalog")
-    
     # Customer information
     customer_name = models.CharField(max_length=100)
     
-    # LEGACY: Product details (keeping for backward compatibility during migration)
-    product_name = models.TextField(choices = CUSTOMER_CHOICES, null=True, blank=True)
-    product_type = models.CharField(max_length=20, choices=PRODUCT_TYPE_CHOICES, null=True, blank=True)
+    # Product details - separate fields for better display and form handling
+    product_name = models.CharField(max_length=100, choices=CUSTOMER_CHOICES, 
+                                   help_text="Select the product category", 
+                                   default='Timber')
+    product_type = models.CharField(max_length=20, choices=PRODUCT_TYPE_CHOICES, 
+                                   help_text="Select the product type", 
+                                   default='Furniture')
+    
+    # Optional: Foreign Key to Product model (for advanced features)
+    product_ref = models.ForeignKey(Product, on_delete=models.PROTECT, null=True, blank=True, 
+                                   help_text="Auto-populated from product details")
     
     # Sale quantity and timing
     quantity = models.IntegerField()  # Number of items sold
@@ -81,6 +85,7 @@ class Sale(models.Model):
         Custom validation for Sale model
         - Prevents future date sales
         - Ensures quantity is positive
+        - Validates product details are provided
         """
         super().clean()
         
@@ -95,6 +100,17 @@ class Sale(models.Model):
             raise ValidationError({
                 'quantity': 'Quantity must be greater than 0. Please enter a positive number.'
             })
+        
+        # Validate product details if provided (they have defaults, so this is optional validation)
+        if self.product_name and self.product_name not in [choice[0] for choice in self.CUSTOMER_CHOICES]:
+            raise ValidationError({
+                'product_name': 'Invalid product name. Please select from available categories.'
+            })
+        
+        if self.product_type and self.product_type not in [choice[0] for choice in self.PRODUCT_TYPE_CHOICES]:
+            raise ValidationError({
+                'product_type': 'Invalid product type. Please select Wood or Furniture.'
+            })
 
     def save(self, *args, **kwargs):
         """
@@ -105,16 +121,16 @@ class Sale(models.Model):
         # Run validation before saving
         self.full_clean()
         
-        # Auto-populate foreign key from legacy fields (backward compatibility)
-        if not self.product_ref and self.product_name and self.product_type:
+        # Auto-populate foreign key from separate fields
+        if self.product_name and self.product_type:
             try:
                 self.product_ref = Product.objects.get(name=self.product_name, product_type=self.product_type)
             except Product.DoesNotExist:
-                # Create product if it doesn't exist (for legacy data)
+                # Create product if it doesn't exist
                 self.product_ref = Product.objects.create(
                     name=self.product_name,
                     product_type=self.product_type,
-                    description=f"Auto-created from Sale record"
+                    description=f"Auto-created from Sale record - {self.product_name} ({self.product_type})"
                 )
         
         if not self.product_id:
@@ -158,15 +174,19 @@ class Stock(models.Model):
     # Product identification and basic info
     product_id = models.CharField(max_length=50, blank=True, unique=True)  # Auto-generated unique identifier
     
-    # NEW: Foreign Key to Product model (better approach)
-    product_ref = models.ForeignKey(Product, on_delete=models.PROTECT, null=True, blank=True,
-                                   help_text="Select product from catalog")
-    
     date = models.DateField()  # Date when item was added to inventory
     
-    # LEGACY: Product details (keeping for backward compatibility during migration)
-    product_name = models.TextField(choices=CUSTOMER_CHOICES, null=True, blank=True)  # Product category
-    product_type = models.CharField(max_length=20, choices=PRODUCT_TYPE_CHOICES, null=True, blank=True)  # Specific type within category
+    # Product details - separate fields for better display and form handling
+    product_name = models.CharField(max_length=100, choices=CUSTOMER_CHOICES, 
+                                   help_text="Select the product category", 
+                                   default='Timber')  # Product category
+    product_type = models.CharField(max_length=20, choices=PRODUCT_TYPE_CHOICES, 
+                                   help_text="Select the product type", 
+                                   default='Furniture')  # Specific type within category
+    
+    # Optional: Foreign Key to Product model (for advanced features)
+    product_ref = models.ForeignKey(Product, on_delete=models.PROTECT, null=True, blank=True,
+                                   help_text="Auto-populated from product details")
     
     # Inventory management
     quantity = models.IntegerField()  # Number of items available
@@ -200,6 +220,17 @@ class Stock(models.Model):
                 'quantity': 'Quantity must be greater than 0. Please enter a positive number.'
             })
         
+        # Validate product details if provided (they have defaults, so this is optional validation)
+        if self.product_name and self.product_name not in [choice[0] for choice in self.CUSTOMER_CHOICES]:
+            raise ValidationError({
+                'product_name': 'Invalid product name. Please select from available categories.'
+            })
+        
+        if self.product_type and self.product_type not in [choice[0] for choice in self.PRODUCT_TYPE_CHOICES]:
+            raise ValidationError({
+                'product_type': 'Invalid product type. Please select Wood or Furniture.'
+            })
+        
         # Validate cost and price are positive (if they contain numeric values)
         if self.cost:
             try:
@@ -229,16 +260,16 @@ class Stock(models.Model):
         Auto-populate foreign key if legacy fields are used
         Format: STK-YYYYMMDD-XXXX (e.g., STK-20251229-0001)
         """
-        # Auto-populate foreign key from legacy fields (backward compatibility)
-        if not self.product_ref and self.product_name and self.product_type:
+        # Auto-populate foreign key from separate fields
+        if self.product_name and self.product_type:
             try:
                 self.product_ref = Product.objects.get(name=self.product_name, product_type=self.product_type)
             except Product.DoesNotExist:
-                # Create product if it doesn't exist (for legacy data)
+                # Create product if it doesn't exist
                 self.product_ref = Product.objects.create(
                     name=self.product_name,
                     product_type=self.product_type,
-                    description=f"Auto-created from Stock record"
+                    description=f"Auto-created from Stock record - {self.product_name} ({self.product_type})"
                 )
         # Run validation before saving
         self.full_clean()
@@ -285,6 +316,4 @@ class Notification(models.Model):
     def __str__(self):
         """String representation for admin interface"""
         return self.message
-
-
 

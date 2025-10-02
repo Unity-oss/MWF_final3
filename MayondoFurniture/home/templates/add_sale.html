@@ -4,14 +4,14 @@
 {% block title %}Add Sale - MWF{% endblock %}
 
 {% block content %}
-    <div class="max-w-4xl mx-auto">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl text-gray-800">Record New Sale</h1>
-        </header>
+<div class="max-w-4xl mx-auto">
+  <header class="text-center mb-8">
+    <h1 class="text-3xl text-gray-800">Record New Sale</h1>
+  </header>
 
-        <form method="post" class="crispy-form">
-            {% csrf_token %}
-            {% include 'forms/sale_form.html' %}
-        </form>
-    </div>
-{% endblock %}
+  <form method="post" action="{% url 'addSale' %}" class="crispy-form">
+    {% csrf_token %}
+    {% include 'forms/sale_form.html' %}
+  </form>
+</div>
+{% endblock content %}

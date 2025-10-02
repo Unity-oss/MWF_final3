@@ -397,22 +397,74 @@ def notifications(request):
 
 @login_required
 @user_passes_test(is_employee_or_manager)
-def addUser(request):
-    if request.method == 'POST':
-        # You may need to adjust this logic to match your user creation form
-        username = request.POST.get('username')
-        # ... other user fields ...
-        # After creating the user:
-        # new_user = User.objects.create_user(...)
-        # Notify all managers
-        managers = User.objects.filter(groups__name="Manager")
-        for manager in managers:
-            Notification.objects.create(
-                user=manager,
-                message=f"A new user was added to the system.",
-                activity_type="info"
+def employee_list(request):
+    # Get all users who are in Employee or Manager groups
+    employees = User.objects.filter(groups__name__in=['Employee', 'Manager']).distinct()
+    return render(request, "employee_list.html", {"Employee": employees})
+
+
+
+@login_required
+@user_passes_test(is_employee_or_manager)
+def addEmployee(request):
+    if request.method == "POST":
+        username = request.POST["username"]
+        first_name = request.POST["first_name"]
+        last_name = request.POST["last_name"]
+        email = request.POST["email"]
+        password = request.POST["password"]
+        title = request.POST["title"]
+
+        try:
+            # Check if username already exists
+            if User.objects.filter(username=username).exists():
+                messages.error(request, f"Username '{username}' is already taken. Please choose a different username.")
+                return render(request, "add_employee.html")
+            
+            # Check if email already exists
+            if User.objects.filter(email=email).exists():
+                messages.error(request, f"Email '{email}' is already registered. Please use a different email.")
+                return render(request, "add_employee.html")
+
+            # Create User
+            new_user = User.objects.create_user(
+                username=username,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                password=password
             )
-    return render(request, "add_user.html")
+
+            # Add user to appropriate group based on title
+            from django.contrib.auth.models import Group
+            if title in ["SalesAgent", "StockClerk"]:
+                group_name = "Employee"
+            else:
+                group_name = "Manager"
+            
+            group, created = Group.objects.get_or_create(name=group_name)
+            new_user.groups.add(group)
+
+            # Notify managers
+            managers = User.objects.filter(groups__name="Manager")
+            for manager in managers:
+                Notification.objects.create(
+                    user=manager,
+                    message=f"A new {group_name.lower()} '{new_user.username}' was added with role: {title}.",
+                    activity_type="info"
+                )
+
+            messages.success(request, f"Employee '{username}' has been successfully created with role: {title}.")
+            return redirect("employee_list")
+            
+        except Exception as e:
+            messages.error(request, f"An error occurred while creating the employee: {str(e)}")
+            return render(request, "add_employee.html")
+
+    return render(request, "add_employee.html")
+
+
+
 
 
 @login_required
@@ -480,9 +532,25 @@ def sales_report(request):
 def stock_report(request):
     start_date = request.GET.get("start_date")
     end_date = request.GET.get("end_date")
+    
+    # Get all stock records
+    all_Stock = Stock.objects.all()
+    
+    # Get manager name (same as sales report)
+    manager_name = f"{request.user.first_name} {request.user.last_name}".strip()
+    if not manager_name:
+        manager_name = request.user.username
+    
+    # Get current date for report generation
+    from datetime import date
+    report_date = date.today()
+    
     return render(request, 'stock_report.html', {
         'start_date': start_date,
-        'end_date': end_date
+        'end_date': end_date,
+        'stocks': all_Stock,
+        'manager_name': manager_name,
+        'report_date': report_date,
     })
 
 @secure_view
@@ -560,56 +628,96 @@ def addSale(request):
     """
     if request.method == 'POST':
         form = SaleForm(request.POST)
+        print(f"DEBUG: Form POST data: {request.POST}")
         if form.is_valid():
             # Get form data before saving
             product_name = form.cleaned_data['product_name']
             product_type = form.cleaned_data['product_type']
             quantity_to_sell = form.cleaned_data['quantity']
-            
-            # Validate stock availability before creating sale (case-insensitive match)
-            try:
-                # Use filter().first() to handle multiple stock items with same name/type
-                stock_item = Stock.objects.filter(product_name__iexact=product_name, product_type__iexact=product_type).first()
-                if not stock_item:
-                    messages.error(request, f'Stock item not found for {product_name} - {product_type}!')
-                    return render(request, 'add_sale.html', {'form': form})
+            print(f"DEBUG: Form is valid. Product: {product_name} ({product_type}), Quantity: {quantity_to_sell}")
+
+            # ✅ Find the stock record for this product combination
+            stock_item = Stock.objects.filter(
+                product_name=product_name, 
+                product_type=product_type
+            ).first()
+
+            if not stock_item:
+                # Check if there are any similar products available
+                available_products = Stock.objects.filter(
+                    product_name=product_name, 
+                    quantity__gt=0
+                ).values_list('product_type', flat=True).distinct()
                 
-                if stock_item.quantity < quantity_to_sell:
-                    messages.error(request, f'Insufficient stock for {product_name} - {product_type}! Available: {stock_item.quantity}, Requested: {quantity_to_sell}')
-                    return render(request, 'add_sale.html', {'form': form})
+                error_msg = f"❌ Cannot record sale: {product_name} ({product_type}) is not available in stock! "
                 
-                # Stock is sufficient - create the sale (product_id will be auto-generated)
-                new_sale = form.save()
+                if available_products:
+                    available_types = ", ".join(available_products)
+                    error_msg += f"However, {product_name} is available in these types: {available_types}. "
+                    error_msg += "Please select the correct product type."
+                else:
+                    error_msg += f"This product '{product_name}' is not in inventory at all. "
+                    error_msg += "Contact your manager for assistance."
                 
-                # Update stock quantity (reduce by sold amount)
-                stock_item.quantity -= quantity_to_sell
-                stock_item.save()
-                
-                # Calculate transport fee if applicable
-                transport_fee_message = ""
-                if new_sale.transport_required:
-                    transport_fee_message = " (5% transport fee included)"
-                
-                # Notify all managers
-                managers = User.objects.filter(groups__name="Manager")
-                for manager in managers:
-                    Notification.objects.create(
-                        user=manager,
-                        message=f"New sale recorded: {new_sale.product_name} ({new_sale.quantity}) by {new_sale.sales_agent}{transport_fee_message}",
-                        activity_type="success"
-                    )
-                
-                messages.success(request, f'Sale recorded successfully! Stock updated: {stock_item.quantity} remaining{transport_fee_message}')
-                return redirect('/saleRecord/')
-                
-            except Stock.DoesNotExist:
-                messages.error(request, f'{product_name} - {product_type} not found in stock. Please add to inventory first.')
+                print(f"DEBUG: {error_msg}")
+                messages.error(request, error_msg)
                 return render(request, 'add_sale.html', {'form': form})
-                
+
+            # ✅ Check if enough stock is available
+            if stock_item.quantity < quantity_to_sell:
+                messages.error(
+                    request,
+                    f'❌ Insufficient stock for {product_name} ({product_type})! '
+                    f'Available quantity: {stock_item.quantity} units, Requested: {quantity_to_sell} units. '
+                    f'Please reduce the quantity to proceed with the sale.'
+                )
+                return render(request, 'add_sale.html', {'form': form})
+
+            # ✅ Check if stock quantity would go to zero or negative
+            if stock_item.quantity == quantity_to_sell:
+                messages.warning(
+                    request,
+                    f'⚠️ Note: This sale will completely exhaust the stock for {product_name} ({product_type}). '
+                    f'Consider restocking this item soon.'
+                )
+
+            # Stock is sufficient - create the sale
+            new_sale = form.save()
+
+            # Update stock quantity
+            stock_item.quantity -= quantity_to_sell
+            stock_item.save()
+
+            # Transport fee info
+            transport_fee_message = ""
+            if new_sale.transport_required:
+                transport_fee_message = " (5% transport fee included)"
+
+            # Notify managers
+            managers = User.objects.filter(groups__name="Manager")
+            for manager in managers:
+                Notification.objects.create(
+                    user=manager,
+                    message=f"New sale recorded: {product_name} ({product_type}) - {new_sale.quantity} units "
+                            f"by {new_sale.sales_agent}{transport_fee_message}",
+                    activity_type="success"
+                )
+
+            messages.success(
+                request,
+                f'Sale recorded successfully! Stock updated: {stock_item.quantity} remaining{transport_fee_message}'
+            )
+            return redirect('saleRecord')
+        else:
+            print(f"DEBUG: Form is NOT valid. Errors: {form.errors}")
+            messages.error(request, f"Please correct the following errors: {form.errors}")
     else:
         form = SaleForm()
-    
+        
+
     return render(request, 'add_sale.html', {'form': form})
+
+
 
 @login_required
 @user_passes_test(is_employee_or_manager)
@@ -812,9 +920,20 @@ def updateStock(request, product_id):
 @manager_required
 def stockReport(request):
     all_Stock = Stock.objects.all()
+    
+    # Get manager name (same as sales report)
+    manager_name = f"{request.user.first_name} {request.user.last_name}".strip()
+    if not manager_name:
+        manager_name = request.user.username
+    
+    # Get current date for report generation
+    from datetime import date
+    report_date = date.today()
 
     context = {
-        "stocks": all_Stock
+        "stocks": all_Stock,
+        "manager_name": manager_name,
+        "report_date": report_date,
     }
     return render(request, "stock_report.html", context)
 

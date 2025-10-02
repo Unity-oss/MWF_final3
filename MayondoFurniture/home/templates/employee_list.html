@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %} EMPLOYEES - MWF{% endblock %}
+
+{% block content %}
+
+<div class="shadow-lg rounded-lg overflow-hidden mx-4 md:mx-10">
+    <table class="w-full table-fixed">
+        <thead>
+            <tr class="bg-gray-100">
+                <th class="w-1/4 py-4 px-6 text-left text-gray-600 font-bold uppercase">Username</th>
+                <th class="w-1/4 py-4 px-6 text-left text-gray-600 font-bold uppercase">First Name</th>
+                <th class="w-1/4 py-4 px-6 text-left text-gray-600 font-bold uppercase">Last Name</th>
+                <th class="w-1/4 py-4 px-6 text-left text-gray-600 font-bold uppercase">Email</th>
+                <th class="w-1/4 py-4 px-6 text-left text-gray-600 font-bold uppercase">Role</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white">
+            {% for item in Employee %}
+            <tr>
+                <td class="py-4 px-6 border-b border-gray-200">{{ item.username }}</td>
+                <td class="py-4 px-6 border-b border-gray-200">{{ item.first_name }}</td>
+                <td class="py-4 px-6 border-b border-gray-200">{{ item.last_name }}</td>
+                <td class="py-4 px-6 border-b border-gray-200">{{ item.email }}</td>
+                <td class="py-4 px-6 border-b border-gray-200">
+                    {% for group in item.groups.all %}
+                        {{ group.name }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </td>
+            </tr>
+            {% endfor %}
+            
+            
+        </tbody>
+    </table>
+</div>
+{% endblock %}

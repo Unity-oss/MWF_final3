@@ -38,11 +38,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Product</label>
                     <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">
-                        {% if stock.product_ref %}
-                            {{ stock.product_ref }}
-                        {% else %}
-                            {{ stock.product_name }} ({{ stock.product_type }})
-                        {% endif %}
+                        {{ stock.product_name }} ({{ stock.product_type }})
                     </p>
                 </div>
                 

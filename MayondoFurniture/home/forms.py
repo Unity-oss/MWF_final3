@@ -39,9 +39,9 @@ class SaleForm(forms.ModelForm):
     """
     class Meta:
         model = Sale   # This form is based on the Sale model
-        fields = ['customer_name', 'product_ref', 'quantity', 'date', 
+        fields = ['customer_name', 'product_name', 'product_type', 'quantity', 'date', 
                  'payment_type', 'sales_agent', 'transport_required']
-        # Using product_ref (foreign key) instead of separate product_name/product_type fields
+        # Using separate product_name and product_type fields for better display
         
         # Custom error messages for better user experience
         error_messages = {
@@ -50,10 +50,13 @@ class SaleForm(forms.ModelForm):
                 'max_length': 'Customer name is too long. Please use 100 characters or less.',
                 'invalid': 'Please enter a valid customer name.',
             },
-            'product_ref': {
-                'required': 'Please select a product from the catalog.',
-                'invalid_choice': 'Selected product is not valid. Please choose from available products.',
-                'does_not_exist': 'Selected product does not exist. Please choose a different product.',
+            'product_name': {
+                'required': 'Product name is required. Please select a product category.',
+                'invalid_choice': 'Invalid product selection. Please choose from available categories.',
+            },
+            'product_type': {
+                'required': 'Product type is required. Please select a product type.',
+                'invalid_choice': 'Invalid product type. Please choose Wood or Furniture.',
             },
             'quantity': {
                 'required': 'Quantity is required. Please specify how many items to sell.',
@@ -79,7 +82,8 @@ class SaleForm(forms.ModelForm):
         # Custom field labels for better clarity
         labels = {
             'customer_name': 'Customer Full Name',
-            'product_ref': 'Product',
+            'product_name': 'Product Name',
+            'product_type': 'Product Type',
             'quantity': 'Quantity to Sell',
             'date': 'Sale Date',
             'payment_type': 'Payment Method',
@@ -90,7 +94,8 @@ class SaleForm(forms.ModelForm):
         # Helpful text to guide users
         help_texts = {
             'customer_name': 'Enter the full name of the customer making this purchase',
-            'product_ref': 'Select the product being sold from the dropdown list',
+            'product_name': 'Select the product name being sold (Timber, Sofa, Tables, etc.)',
+            'product_type': 'Select whether this is a Wood or Furniture product',
             'quantity': 'Number of items to sell (must be available in stock)',
             'date': 'Date when this sale occurred (cannot be in the future)',
             'payment_type': 'How the customer is paying for this purchase',
@@ -130,15 +135,18 @@ class StockForm(forms.ModelForm):
     """
     class Meta:
         model = Stock   # Based on Stock model
-        fields = ['product_ref', 'quantity', 'date', 'supplier_name', 'cost', 'price', 'origin']
-        # Using product_ref (foreign key) instead of separate product_name/product_type fields
+        fields = ['product_name', 'product_type', 'quantity', 'date', 'supplier_name', 'cost', 'price', 'origin']
+        # Using separate product_name and product_type fields for better display
         
         # Custom error messages for better user experience
         error_messages = {
-            'product_ref': {
-                'required': 'Please select a product from the catalog.',
-                'invalid_choice': 'Selected product is not valid. Please choose from available products.',
-                'does_not_exist': 'Selected product does not exist. Please choose a different product.',
+            'product_name': {
+                'required': 'Product name is required. Please select a product category.',
+                'invalid_choice': 'Invalid product selection. Please choose from available categories.',
+            },
+            'product_type': {
+                'required': 'Product type is required. Please select a product type.',
+                'invalid_choice': 'Invalid product type. Please choose Wood or Furniture.',
             },
             'quantity': {
                 'required': 'Stock quantity is required. Please specify how many items to add.',
@@ -171,7 +179,8 @@ class StockForm(forms.ModelForm):
         
         # Custom field labels for better clarity
         labels = {
-            'product_ref': 'Product',
+            'product_name': 'Product Name',
+            'product_type': 'Product Type',
             'quantity': 'Stock Quantity',
             'date': 'Stock Date',
             'supplier_name': 'Supplier Name',
@@ -182,7 +191,8 @@ class StockForm(forms.ModelForm):
         
         # Helpful text to guide users
         help_texts = {
-            'product_ref': 'Select the product to add to inventory',
+            'product_name': 'Select the product name to add to inventory (Timber, Sofa, Tables, etc.)',
+            'product_type': 'Select whether this is a Wood or Furniture product',
             'quantity': 'Number of items to add to stock',
             'date': 'Date when the stock was received (cannot be in the future)',
             'supplier_name': 'Name of the supplier who provided this stock',

@@ -1,42 +1,78 @@
 {% load crispy_forms_tags %}
 
+{# Card Header #}
 {% include 'snippets/form_card_header.html' with title='Sale Information' info='Product ID will be automatically generated when you save this sale.' %}
 
-    <!-- Customer Name (full width) -->
-    <div class="form-row mb-4">
-        <div class="col-12">
-            {{ form.customer_name|as_crispy_field }}
-        </div>
-    </div>
+{# Display non-field errors #}
+{% if form.non_field_errors %}
+<div class="text-red-600 mb-4">
+    {{ form.non_field_errors }}
+</div>
+{% endif %}
 
-    <!-- Product Selection (full width) -->
-    <div class="form-row mb-4">
-        <div class="col-12">
-            {{ form.product_ref|as_crispy_field }}
-        </div>
+{# Customer Name (full width) #}
+<div class="form-row mb-4">
+    <div class="col-12">
+        {{ form.customer_name|as_crispy_field }}
+        {% if form.customer_name.errors %}
+            <p class="text-red-600 text-sm">{{ form.customer_name.errors }}</p>
+        {% endif %}
     </div>
+</div>
 
-    <!-- Quantity, Date, Payment Type (3 columns) -->
-    <div class="form-row mb-4">
-        <div class="col-md-4">
-            {{ form.quantity|as_crispy_field }}
-        </div>
-        <div class="col-md-4">
-            {{ form.date|as_crispy_field }}
-        </div>
-        <div class="col-md-4">
-            {{ form.payment_type|as_crispy_field }}
-        </div>
+{# Product Selection (2 columns) #}
+<div class="form-row mb-4">
+    <div class="col-md-6">
+        {{ form.product_name|as_crispy_field }}
+        {% if form.product_name.errors %}
+            <p class="text-red-600 text-sm">{{ form.product_name.errors }}</p>
+        {% endif %}
     </div>
-
-    <!-- Sales Agent and Transport (2 columns) -->
-    <div class="form-row mb-4">
-        <div class="col-md-8">
-            {{ form.sales_agent|as_crispy_field }}
-        </div>
-        <div class="col-md-4 d-flex align-items-center">
-            {{ form.transport_required|as_crispy_field }}
-        </div>
+    <div class="col-md-6">
+        {{ form.product_type|as_crispy_field }}
+        {% if form.product_type.errors %}
+            <p class="text-red-600 text-sm">{{ form.product_type.errors }}</p>
+        {% endif %}
     </div>
+</div>
 
+{# Quantity, Date, Payment Type (3 columns) #}
+<div class="form-row mb-4">
+    <div class="col-md-4">
+        {{ form.quantity|as_crispy_field }}
+        {% if form.quantity.errors %}
+            <p class="text-red-600 text-sm">{{ form.quantity.errors }}</p>
+        {% endif %}
+    </div>
+    <div class="col-md-4">
+        {{ form.date|as_crispy_field }}
+        {% if form.date.errors %}
+            <p class="text-red-600 text-sm">{{ form.date.errors }}</p>
+        {% endif %}
+    </div>
+    <div class="col-md-4">
+        {{ form.payment_type|as_crispy_field }}
+        {% if form.payment_type.errors %}
+            <p class="text-red-600 text-sm">{{ form.payment_type.errors }}</p>
+        {% endif %}
+    </div>
+</div>
+
+{# Sales Agent and Transport (2 columns) #}
+<div class="form-row mb-4">
+    <div class="col-md-8">
+        {{ form.sales_agent|as_crispy_field }}
+        {% if form.sales_agent.errors %}
+            <p class="text-red-600 text-sm">{{ form.sales_agent.errors }}</p>
+        {% endif %}
+    </div>
+    <div class="col-md-4 d-flex align-items-center">
+        {{ form.transport_required|as_crispy_field }}
+        {% if form.transport_required.errors %}
+            <p class="text-red-600 text-sm">{{ form.transport_required.errors }}</p>
+        {% endif %}
+    </div>
+</div>
+
+{# Form actions (Save / Cancel buttons) #}
 {% include 'snippets/form_actions.html' with submit_text='Save Sale' cancel_url='/saleRecord/' %}

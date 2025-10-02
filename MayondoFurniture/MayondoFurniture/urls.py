@@ -25,7 +25,7 @@ from django.urls import path
 from home.views import (
     landingPage, loginPage, logoutPage, dashBoard, addSale, saleRecord, 
     viewSingleSale, editSale, updateSale, deleteSale, saleReport, stockRecord, 
-    stockReport, report, addStock, addUser, activityFeed, notifications, 
+    stockReport, report, addStock, addEmployee,employee_list, activityFeed, notifications, 
     sales_report, stock_report, viewSingleStock, editStock, updateStock, 
     deleteStock, mark_notification_read, mark_all_notifications_read, generateReceipt
 )
@@ -42,7 +42,8 @@ urlpatterns = [
     path('dashboard/', dashBoard, name='dashboard'), # Main dashboard
     
     # ===== USER MANAGEMENT =====
-    path('addUser/', addUser, name='addUser'),      # Add new users (managers only)
+    path('addEmployee/', addEmployee, name='addEmployee'),      # Add new users (managers only)
+    path('employee_list/', employee_list, name='employee_list'), # view all employees
     
     # ===== SALES MANAGEMENT =====
     path('addSale/', addSale, name='addSale'),              # Create new sale
