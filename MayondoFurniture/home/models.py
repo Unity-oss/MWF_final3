@@ -214,10 +214,10 @@ class Stock(models.Model):
                 'date': 'Stock date cannot be in the future. Please select today\'s date or an earlier date.'
             })
         
-        # Validate quantity is positive
-        if self.quantity is not None and self.quantity <= 0:
+        # Validate quantity is not negative (allow 0 for out-of-stock items)
+        if self.quantity is not None and self.quantity < 0:
             raise ValidationError({
-                'quantity': 'Quantity must be greater than 0. Please enter a positive number.'
+                'quantity': 'Quantity cannot be negative. Please enter 0 or a positive number.'
             })
         
         # Validate product details if provided (they have defaults, so this is optional validation)

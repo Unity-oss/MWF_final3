@@ -27,7 +27,8 @@ from home.views import (
     viewSingleSale, editSale, updateSale, deleteSale, saleReport, stockRecord, 
     stockReport, report, addStock, addEmployee,employee_list, activityFeed, notifications, 
     sales_report, stock_report, viewSingleStock, editStock, updateStock, 
-    deleteStock, mark_notification_read, mark_all_notifications_read, generateReceipt
+    deleteStock, mark_notification_read, mark_all_notifications_read, generateReceipt,
+    stock_data_api
 )
 from home.search import search_dashboard
 
@@ -65,6 +66,9 @@ urlpatterns = [
     path("activityFeed/", activityFeed, name='activityFeed'),       # Activity feed
     path('mark_notification_read/', mark_notification_read, name='mark_notification_read'), # Mark single notification as read
     path('mark_all_notifications_read/', mark_all_notifications_read, name='mark_all_notifications_read'), # Mark all notifications as read
+    
+    # ===== API ENDPOINTS =====
+    path('api/stock-data/', stock_data_api, name='stock_data_api'),   # Stock data JSON API
     
     # ===== SEARCH FUNCTIONALITY =====
     path('search_dashboard/', search_dashboard, name='search_dashboard'), # Dashboard search

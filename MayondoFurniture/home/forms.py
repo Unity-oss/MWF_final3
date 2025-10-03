@@ -123,6 +123,44 @@ class SaleForm(forms.ModelForm):
         from datetime import date
         self.fields['date'].widget.attrs['max'] = date.today().strftime('%Y-%m-%d')
         
+        # Filter product choices to only show products with available stock (consolidated)
+        from django.db.models import Sum
+        consolidated_stock = Stock.objects.values('product_name', 'product_type').annotate(
+            total_quantity=Sum('quantity')
+        ).filter(total_quantity__gt=0)
+        
+        # Get unique product names that have stock
+        available_product_names = consolidated_stock.values_list('product_name', flat=True).distinct()
+        product_name_choices = [
+            (product_name, product_name) for product_name in available_product_names
+        ]
+        
+        # Get unique product types that have stock  
+        available_product_types = consolidated_stock.values_list('product_type', flat=True).distinct()
+        product_type_choices = [
+            (product_type, product_type) for product_type in available_product_types
+        ]
+        
+        # Update field choices to only show available items
+        if product_name_choices:
+            self.fields['product_name'].widget = forms.Select(choices=[('', 'Select Product Name')] + product_name_choices)
+        else:
+            self.fields['product_name'].widget = forms.Select(choices=[('', 'No products in stock')])
+            
+        if product_type_choices:
+            self.fields['product_type'].widget = forms.Select(choices=[('', 'Select Product Type')] + product_type_choices)
+        else:
+            self.fields['product_type'].widget = forms.Select(choices=[('', 'No product types in stock')])
+        
+        # Add data attributes for JavaScript quantity validation
+        self.fields['product_name'].widget.attrs.update({
+            'data-stock-info': 'true',
+            'onchange': 'updateQuantityLimits()'
+        })
+        self.fields['product_type'].widget.attrs.update({
+            'onchange': 'updateQuantityLimits()'
+        })
+        
         # Add required attributes for client-side validation
         required_fields = ['customer_name', 'product_name', 'product_type', 'quantity', 'date', 'payment_type', 'sales_agent']
         for field_name in required_fields:

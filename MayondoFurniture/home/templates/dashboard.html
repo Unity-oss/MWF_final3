@@ -382,19 +382,37 @@ Key Features:
             </div>
           </div>
 
-          <!-- Stock Card -->
+          <!-- Out of Stock Card -->
           <div
-            class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+            class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow {% if data.out_of_stock_count > 0 %}border-red-300 bg-red-50{% endif %}"
           >
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm font-medium text-gray-600">Out of Stock</p>
-                <p class="text-3xl font-bold text-gray-900 mt-2">{{ data.out_of_stock_count|default:"0" }}</p>
+                <div class="flex items-center space-x-2">
+                  <p class="text-sm font-medium text-gray-600">Out of Stock Items</p>
+                  {% if data.out_of_stock_count > 0 %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      Urgent
+                    </span>
+                  {% endif %}
+                </div>
+                <p class="text-3xl font-bold {% if data.out_of_stock_count > 0 %}text-red-600{% else %}text-gray-900{% endif %} mt-2">
+                  {{ data.out_of_stock_count|default:"0" }}
+                </p>
+                {% if data.out_of_stock_count > 0 %}
+                  <p class="text-xs text-red-600 font-medium">
+                    {{ data.out_of_stock_count }} item{{ data.out_of_stock_count|pluralize }} need{{ data.out_of_stock_count|pluralize:"s," }} restocking
+                  </p>
+                {% endif %}
               </div>
               <div
-                class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center"
+                class="w-12 h-12 {% if data.out_of_stock_count > 0 %}bg-red-100{% else %}bg-purple-100{% endif %} rounded-lg flex items-center justify-center"
               >
-                <i class="fas fa-box text-purple-600 text-xl"></i>
+                {% if data.out_of_stock_count > 0 %}
+                  <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                {% else %}
+                  <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {% endif %}
               </div>
             </div>
           </div>
@@ -525,14 +543,78 @@ Key Features:
 
         <!-- Bottom Row -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Recent Activity -->
-
+          <!-- Out of Stock Items -->
           <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">
-              Recent Activity
-            </h3>
-            <div class="space-y-4" id="activity-feed"></div>
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold text-gray-900">
+                Out of Stock Items
+              </h3>
+              <span class="px-2 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full">
+                {{ data.out_of_stock_count }} items
+              </span>
+            </div>
+            <div class="space-y-3 max-h-64 overflow-y-auto">
+              {% if data.out_of_stock_items %}
+                {% for item in data.out_of_stock_items %}
+                <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                      <i class="fas fa-exclamation-triangle text-red-600 text-sm"></i>
+                    </div>
+                    <div>
+                      <p class="font-medium text-gray-900">{{ item.product_name }}</p>
+                      <p class="text-sm text-gray-600">({{ item.product_type }})</p>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-xs text-gray-500">Last restocked:</p>
+                    <p class="text-sm font-medium text-gray-700">{{ item.date|date:"M d, Y" }}</p>
+                  </div>
+                </div>
+                {% endfor %}
+              {% else %}
+                <div class="text-center py-8 text-gray-500">
+                  <i class="fas fa-check-circle text-4xl text-green-500 mb-2"></i>
+                  <p class="font-medium text-green-600">All items in stock ✅</p>
+                  <p class="text-sm text-gray-500">No out-of-stock items to display</p>
+                </div>
+              {% endif %}
+            </div>
           </div>
+
+          <!-- Low Stock Notifications -->
+          {% if data.low_stock_count > 0 %}
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
+                Low Stock Alert
+              </h3>
+              <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-sm font-medium rounded-full">
+                {{ data.low_stock_count }} items
+              </span>
+            </div>
+            <div class="space-y-3 max-h-48 overflow-y-auto">
+              {% for item in data.low_stock_items %}
+              <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                <div class="flex items-center space-x-3">
+                  <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-warning text-yellow-600 text-sm"></i>
+                  </div>
+                  <div>
+                    <p class="font-medium text-gray-900">{{ item.product_name }}</p>
+                    <p class="text-sm text-gray-600">({{ item.product_type }})</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <p class="text-lg font-bold text-yellow-600">{{ item.quantity }}</p>
+                  <p class="text-xs text-gray-500">units left</p>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
         </div>
       </main>
     </div>

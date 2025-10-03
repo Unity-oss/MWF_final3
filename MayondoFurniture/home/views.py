@@ -33,6 +33,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.http import JsonResponse
 from functools import wraps
+from datetime import datetime
 
 # Local application imports
 from home.models import Sale, Stock, Notification
@@ -202,6 +203,114 @@ def logoutPage(request):
 
 
 
+def create_low_stock_notifications():
+    """
+    Create notifications for low stock items (< 5 units)
+    Only creates new notifications to avoid spam
+    """
+    try:
+        from datetime import datetime, timedelta
+        from django.db.models import Q
+        
+        # Get items with low stock (less than 5 units)
+        low_stock_items = Stock.objects.filter(quantity__gt=0, quantity__lt=5)
+        
+        # Get all managers to notify
+        managers = User.objects.filter(groups__name="Manager")
+        
+        # Check each low stock item
+        for item in low_stock_items:
+            notification_message = f"⚠️ LOW STOCK ALERT: {item.product_name} ({item.product_type}) - Only {item.quantity} units remaining"
+            
+            # Check if we already sent a similar notification in the last 24 hours
+            last_24_hours = datetime.now() - timedelta(hours=24)
+            
+            for manager in managers:
+                # Check for existing low stock notifications for this specific item
+                existing_notification = Notification.objects.filter(
+                    Q(user=manager) &
+                    Q(message__icontains="LOW STOCK ALERT") &
+                    Q(message__icontains=f"{item.product_name} ({item.product_type})") &
+                    Q(created_at__gte=last_24_hours)
+                ).exists()
+                
+                # Only create notification if we haven't already notified about this item recently
+                if not existing_notification:
+                    Notification.objects.create(
+                        user=manager,
+                        message=notification_message,
+                        activity_type="warning"
+                    )
+    except Exception as e:
+        # Fail silently to avoid breaking the dashboard
+        print(f"Error creating low stock notifications: {e}")
+
+def create_low_stock_notifications_consolidated(low_stock_products):
+    """
+    Create notifications for low stock items based on consolidated data
+    Clears old notifications when stock is replenished
+    """
+    try:
+        from datetime import datetime, timedelta
+        from django.db.models import Q
+        
+        # Get all managers to notify
+        managers = User.objects.filter(groups__name="Manager")
+        
+        # Get all product combinations that currently exist
+        from django.db.models import Sum
+        all_products = Stock.objects.values('product_name', 'product_type').annotate(
+            total_quantity=Sum('quantity')
+        )
+        
+        for manager in managers:
+            # Clear old low stock notifications for items that are now adequately stocked
+            for product in all_products:
+                if product['total_quantity'] >= 5:  # No longer low stock
+                    # Remove old low stock notifications for this product
+                    old_notifications = Notification.objects.filter(
+                        Q(user=manager) &
+                        Q(message__icontains="LOW STOCK ALERT") &
+                        Q(message__icontains=f"{product['product_name']} ({product['product_type']})")
+                    )
+                    deleted_count = old_notifications.count()
+                    old_notifications.delete()
+                    
+                    if deleted_count > 0:
+                        # Create a restocked notification
+                        Notification.objects.create(
+                            user=manager,
+                            message=f"✅ RESTOCKED: {product['product_name']} ({product['product_type']}) - Now {product['total_quantity']} units available",
+                            activity_type="success"
+                        )
+        
+        # Create new low stock notifications only for items still low
+        last_24_hours = datetime.now() - timedelta(hours=24)
+        
+        for product in low_stock_products:
+            notification_message = f"⚠️ LOW STOCK ALERT: {product['product_name']} ({product['product_type']}) - Only {product['total_quantity']} units remaining"
+            
+            for manager in managers:
+                # Check if we already sent a similar notification in the last 24 hours
+                existing_notification = Notification.objects.filter(
+                    Q(user=manager) &
+                    Q(message__icontains="LOW STOCK ALERT") &
+                    Q(message__icontains=f"{product['product_name']} ({product['product_type']})") &
+                    Q(created_at__gte=last_24_hours)
+                ).exists()
+                
+                # Only create notification if we haven't already notified about this item recently
+                if not existing_notification:
+                    Notification.objects.create(
+                        user=manager,
+                        message=notification_message,
+                        activity_type="warning"
+                    )
+                    
+    except Exception as e:
+        # Fail silently to avoid breaking the dashboard
+        print(f"Error creating consolidated low stock notifications: {e}")
+
 @never_cache
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 @login_required
@@ -224,10 +333,63 @@ def dashBoard(request):
     is_manager = user.groups.filter(name="Manager").exists()
     is_employee = user.groups.filter(name="Employee").exists()
 
-    # Calculate statistics
+    # Calculate statistics with consolidated stock data
     total_sales = Sale.objects.count()
-    total_stock_items = Stock.objects.aggregate(total=models.Sum('quantity'))['total'] or 0
-    out_of_stock_count = Stock.objects.filter(quantity=0).count()
+    
+    # Consolidate stock by product combination (sum quantities for same product)
+    from django.db.models import Sum
+    consolidated_stock = Stock.objects.values('product_name', 'product_type').annotate(
+        total_quantity=Sum('quantity'),
+        latest_date=models.Max('date')
+    )
+    
+    # Calculate totals from consolidated data
+    total_stock_items = sum(item['total_quantity'] for item in consolidated_stock)
+    
+    # Get out of stock products (consolidated quantity = 0)
+    out_of_stock_products = [item for item in consolidated_stock if item['total_quantity'] == 0]
+    out_of_stock_count = len(out_of_stock_products)
+    
+    # Convert to objects for template compatibility
+    out_of_stock_items = []
+    for item in out_of_stock_products:
+        # Create a mock object with the required fields
+        class MockStock:
+            def __init__(self, product_name, product_type, date):
+                self.product_name = product_name
+                self.product_type = product_type
+                self.date = date
+        
+        out_of_stock_items.append(MockStock(
+            item['product_name'], 
+            item['product_type'], 
+            item['latest_date']
+        ))
+    
+    # Get low stock products (consolidated quantity > 0 but < 5)
+    low_stock_products = [item for item in consolidated_stock if 0 < item['total_quantity'] < 5]
+    low_stock_count = len(low_stock_products)
+    
+    # Convert to objects for template compatibility
+    low_stock_items = []
+    for item in low_stock_products:
+        class MockStock:
+            def __init__(self, product_name, product_type, quantity):
+                self.product_name = product_name
+                self.product_type = product_type
+                self.quantity = quantity
+        
+        low_stock_items.append(MockStock(
+            item['product_name'], 
+            item['product_type'], 
+            item['total_quantity']
+        ))
+    
+    # Get available products for sales form (consolidated quantity > 0)
+    available_products = [item for item in consolidated_stock if item['total_quantity'] > 0]
+    
+    # Create automatic low stock notifications for managers (with consolidated data)
+    create_low_stock_notifications_consolidated(low_stock_products)
     
     # Calculate total revenue from sales (using price field which is unit price)
     total_revenue = 0
@@ -297,6 +459,10 @@ def dashBoard(request):
             "total_sales": total_sales,
             "total_stock_items": total_stock_items,
             "out_of_stock_count": out_of_stock_count,
+            "out_of_stock_items": out_of_stock_items,
+            "low_stock_items": low_stock_items,
+            "low_stock_count": low_stock_count,
+            "available_products": available_products,
             "total_revenue": total_revenue,
         }
     elif is_employee:
@@ -306,6 +472,10 @@ def dashBoard(request):
             "total_sales": total_sales,
             "total_stock_items": total_stock_items,
             "out_of_stock_count": out_of_stock_count,
+            "out_of_stock_items": out_of_stock_items,
+            "low_stock_items": low_stock_items,
+            "low_stock_count": low_stock_count,
+            "available_products": available_products,
             "total_revenue": total_revenue,
         }
     else:
@@ -393,6 +563,41 @@ def notifications(request):
         for n in unread_notifications
     ]
     return JsonResponse({"notifications": data, "count": unread_count})
+
+@login_required
+@user_passes_test(is_employee_or_manager)
+def stock_data_api(request):
+    """
+    API endpoint to provide stock data as JSON for JavaScript consumption
+    Clean separation between Django backend and frontend JavaScript
+    """
+    try:
+        from django.db.models import Sum
+        
+        # Get consolidated stock data
+        available_products = Stock.objects.values('product_name', 'product_type').annotate(
+            quantity=Sum('quantity')
+        ).filter(quantity__gt=0)
+        
+        # Convert to JavaScript-friendly format
+        stock_data = {}
+        for product in available_products:
+            key = f"{product['product_name']}-{product['product_type']}"
+            stock_data[key] = product['quantity']
+        
+        return JsonResponse({
+            "success": True,
+            "stock_data": stock_data,
+            "total_products": len(stock_data),
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e),
+            "stock_data": {}
+        }, status=500)
 
 
 @login_required
@@ -636,13 +841,23 @@ def addSale(request):
             quantity_to_sell = form.cleaned_data['quantity']
             print(f"DEBUG: Form is valid. Product: {product_name} ({product_type}), Quantity: {quantity_to_sell}")
 
-            # ✅ Find the stock record for this product combination
-            stock_item = Stock.objects.filter(
+            # ✅ Check consolidated stock for this product combination
+            from django.db.models import Sum
+            consolidated_stock = Stock.objects.filter(
                 product_name=product_name, 
                 product_type=product_type
+            ).aggregate(total_quantity=Sum('quantity'))
+            
+            total_available = consolidated_stock['total_quantity'] or 0
+            
+            # Find a stock record with available quantity to deduct from
+            stock_item = Stock.objects.filter(
+                product_name=product_name, 
+                product_type=product_type,
+                quantity__gt=0
             ).first()
 
-            if not stock_item:
+            if total_available <= 0 or not stock_item:
                 # Check if there are any similar products available
                 available_products = Stock.objects.filter(
                     product_name=product_name, 
@@ -661,20 +876,32 @@ def addSale(request):
                 
                 print(f"DEBUG: {error_msg}")
                 messages.error(request, error_msg)
-                return render(request, 'add_sale.html', {'form': form})
+                available_products = Stock.objects.values('product_name', 'product_type').annotate(
+                    quantity=Sum('quantity')
+                ).filter(quantity__gt=0)
+                return render(request, 'add_sale.html', {
+                    'form': form,
+                    'data': {'available_products': available_products}
+                })
 
-            # ✅ Check if enough stock is available
-            if stock_item.quantity < quantity_to_sell:
+            # ✅ Check if enough consolidated stock is available
+            if total_available < quantity_to_sell:
                 messages.error(
                     request,
                     f'❌ Insufficient stock for {product_name} ({product_type})! '
-                    f'Available quantity: {stock_item.quantity} units, Requested: {quantity_to_sell} units. '
+                    f'Available quantity: {total_available} units, Requested: {quantity_to_sell} units. '
                     f'Please reduce the quantity to proceed with the sale.'
                 )
-                return render(request, 'add_sale.html', {'form': form})
+                available_products = Stock.objects.values('product_name', 'product_type').annotate(
+                    quantity=Sum('quantity')
+                ).filter(quantity__gt=0)
+                return render(request, 'add_sale.html', {
+                    'form': form,
+                    'data': {'available_products': available_products}
+                })
 
-            # ✅ Check if stock quantity would go to zero or negative
-            if stock_item.quantity == quantity_to_sell:
+            # ✅ Check if consolidated stock quantity would go to zero
+            if total_available == quantity_to_sell:
                 messages.warning(
                     request,
                     f'⚠️ Note: This sale will completely exhaust the stock for {product_name} ({product_type}). '
@@ -684,9 +911,28 @@ def addSale(request):
             # Stock is sufficient - create the sale
             new_sale = form.save()
 
-            # Update stock quantity
-            stock_item.quantity -= quantity_to_sell
-            stock_item.save()
+            # Update stock quantity (may need to deduct from multiple records)
+            remaining_to_deduct = quantity_to_sell
+            stock_records = Stock.objects.filter(
+                product_name=product_name, 
+                product_type=product_type,
+                quantity__gt=0
+            ).order_by('-date')  # Deduct from newest stock first
+            
+            for record in stock_records:
+                if remaining_to_deduct <= 0:
+                    break
+                
+                if record.quantity >= remaining_to_deduct:
+                    # This record has enough stock
+                    record.quantity -= remaining_to_deduct
+                    record.save()
+                    remaining_to_deduct = 0
+                else:
+                    # Partially use this record and continue to next
+                    remaining_to_deduct -= record.quantity
+                    record.quantity = 0
+                    record.save()
 
             # Transport fee info
             transport_fee_message = ""
@@ -703,9 +949,15 @@ def addSale(request):
                     activity_type="success"
                 )
 
+            # Calculate remaining stock after deduction
+            remaining_stock = Stock.objects.filter(
+                product_name=product_name, 
+                product_type=product_type
+            ).aggregate(total=Sum('quantity'))['total'] or 0
+            
             messages.success(
                 request,
-                f'Sale recorded successfully! Stock updated: {stock_item.quantity} remaining{transport_fee_message}'
+                f'Sale recorded successfully! Stock updated: {remaining_stock} remaining{transport_fee_message}'
             )
             return redirect('saleRecord')
         else:
@@ -713,9 +965,17 @@ def addSale(request):
             messages.error(request, f"Please correct the following errors: {form.errors}")
     else:
         form = SaleForm()
-        
+    
+    # Get available products for JavaScript stock validation (consolidated)
+    from django.db.models import Sum
+    available_products = Stock.objects.values('product_name', 'product_type').annotate(
+        quantity=Sum('quantity')
+    ).filter(quantity__gt=0)
 
-    return render(request, 'add_sale.html', {'form': form})
+    return render(request, 'add_sale.html', {
+        'form': form,
+        'data': {'available_products': available_products}
+    })
 
 
 

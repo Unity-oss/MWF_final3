@@ -23,4 +23,14 @@
     {% include 'forms/sale_form.html' %}
   </form>
 </div>
+
+<!-- Clean JavaScript Implementation -->
+{% load static %}
+<script src="{% static 'js/sales_form.js' %}"></script>
+<script type="text/javascript">
+  // Initialize the Sales Form Manager when the page loads
+  document.addEventListener('DOMContentLoaded', function() {
+    new SalesFormManager();
+  });
+</script>
 {% endblock content %}
