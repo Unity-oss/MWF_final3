@@ -3,37 +3,88 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MWF</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          "cordes-dark": "#007b83",
-        },
-        fontFamily: {
-          'cooper': ['CooperBlack', 'serif'],
-        },
-      },
-    },
-  };
-</script>
+<title>Furniture Landing Page</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-  @font-face {
-    font-family: 'CooperBlack';
-    src: url('../static/CooperBlack.woff2') format('woff2'),
-         url('../static/CooperBlack.woff') format('woff');
-    font-weight: normal;
-    font-style: normal;
+  /* Ensure page covers full screen */
+  body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: CooperBlack, sans-serif;
+    color: white;
+    text-align: center;
+    overflow: hidden;
   }
+
+  /* Background image */
+  body {
+    background: url("../static/back_11.jpeg") no-repeat center center fixed;
+    background-size: cover; /* makes image cover entire screen */
+  }
+
+  /* Content overlay */
+  .content {
+    position: relative;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* center vertically */
+    align-items: center;     /* center horizontally */
+    text-align: center;
+  }
+
+  h1 {
+    margin-top: 20px;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.7); /* make text readable */
+  }
+
+  
+
+  img {
+    max-width: 200px;
+  }
+  /* From Uiverse.io by ShrinilDhorda */ 
+.btn {
+  font-size: 1.2rem;
+  padding: 1rem 2.5rem;
+  border: none;
+  outline: none;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  background-color: rgb(230, 23, 23);
+  color: rgb(234, 234, 234);
+  font-weight: 700;
+  transition: 0.6s;
+  box-shadow: 0px 0px 60px #1f4c65;
+}
+
+.btn:active {
+  scale: 0.92;
+}
+
+.btn:hover {
+  background: rgb(2,29,78);
+  background: linear-gradient(270deg, rgba(2, 29, 78, 0.681) 0%, rgba(31, 215, 232, 0.873) 60%);
+  color: rgb(4, 4, 38);
+}
 </style>
-
 </head>
-<body class="bg-cordes-dark text-white font-cooper h-screen flex flex-col justify-between items-center text-center m-0">
-  <h1 class="font-cooper mt-5 text-2xl md:text-4xl lg:text-5xl font-bold">MAYONDO WOOD & FURNITURE WORKSHOP</h1>
-  <img src="../static/logo2.png" alt="furniture_logo" class="flex-shrink-0">
-  <a class="self-end m-5 px-8 py-3 border-0 rounded-lg cursor-pointer shadow-[0_0_8px_rgba(255,50,50,0.7)] transition-all duration-300 ease-in-out hover:shadow-[0_0_15px_rgba(255,50,50,1)] hover:scale-105 bg-red-600 text-white no-underline font-medium" href="/login/">GET STARTED</a>
+<body>
 
+<!-- Page Content -->
+<div class="content">
+  <div class="card bg-dark bg-opacity-50 text-white p-4 rounded-4 shadow-lg">
+    <div class="card-body text-center">
+      <h1 class="card-title">MAYONDO WOOD & FURNITURE WORKSHOP</h1>
+<button  class="btn"><a href="/login/"> GET STARTED</a></button>
+
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -189,7 +189,7 @@ def logoutPage(request):
     request.session.flush()
     
     # Add security message
-    messages.success(request, 'You have been logged out successfully. For security, please close your browser.')
+    messages.success(request, 'You have been logged out successfully.')
     
     # Create response with strict cache control headers
     response = render(request, "logout.html")
