@@ -155,7 +155,10 @@ def loginPage(request):
             # Verify user belongs to the selected role group
             if user.groups.filter(name=role).exists():
                 login(request, user)  # Start user session
-                messages.success(request, f"Welcome back, {user.get_full_name() or user.username}!")
+                # Only show welcome message once per login session
+                if not request.session.get('welcome_shown', False):
+                    messages.success(request, f"Welcome back, {user.get_full_name() or user.username}!")
+                    request.session['welcome_shown'] = True
                 return redirect("dashboard")  # Successful login - go to dashboard
             else:
                 messages.error(request, f"Access denied. You are not authorized for the '{role}' role. Please check your role selection or contact an administrator.")

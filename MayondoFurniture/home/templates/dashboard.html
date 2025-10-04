@@ -344,6 +344,28 @@ Key Features:
         </div>
       </header>
 
+      <!-- Welcome Message Display (Dashboard Only) -->
+      {% if messages %}
+        <div class="px-6 pt-4">
+          {% for message in messages %}
+            {% if 'Welcome back' in message.message and message.tags == 'success' %}
+            <div class="mb-4 px-4 py-3 rounded-lg border-l-4 shadow-md bg-green-50 border-green-400 text-green-700 flex items-start">
+              <div class="flex-shrink-0 mr-3 mt-0.5">
+                <i class="fas fa-check-circle"></i>
+              </div>
+              <div class="flex-1">
+                <p class="font-medium text-sm mb-1">Success</p>
+                <p class="text-sm">{{ message }}</p>
+              </div>
+              <button type="button" class="flex-shrink-0 ml-3 text-gray-400 hover:text-gray-600" onclick="this.parentElement.style.display='none';">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+
       <!-- Main Dashboard Content -->
       <main class="p-6">
         <!-- Stats Cards -->
@@ -1110,6 +1132,24 @@ document.addEventListener('click', function(e) {
     </div>
   </div>
 </div>
+
+<!-- Auto-hide welcome message after 5 seconds -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const welcomeMessages = document.querySelectorAll('.bg-green-50');
+    welcomeMessages.forEach(function(message) {
+        if (message.textContent.includes('Welcome back')) {
+            setTimeout(function() {
+                message.style.opacity = '0';
+                message.style.transition = 'opacity 0.5s ease-out';
+                setTimeout(function() {
+                    message.style.display = 'none';
+                }, 500);
+            }, 5000); // Hide after 5 seconds
+        }
+    });
+});
+</script>
 
   </body>
 </html>

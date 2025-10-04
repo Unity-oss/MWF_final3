@@ -132,36 +132,38 @@ can extend this base and override specific blocks.
 <!-- Skip Link for Accessibility -->
 <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-cordes-dark text-white px-4 py-2 rounded z-50">Skip to main content</a>
 
-<!-- Django Messages Display -->
+<!-- Django Messages Display (excluding welcome messages) -->
 {% if messages %}
 <div class="max-w-7xl mx-auto px-6 pt-4">
     {% for message in messages %}
-    <div class="mb-4 px-4 py-3 rounded-lg border-l-4 shadow-md {% if message.tags == 'error' %}bg-red-50 border-red-400 text-red-700{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-400 text-yellow-700{% elif message.tags == 'success' %}bg-green-50 border-green-400 text-green-700{% else %}bg-blue-50 border-blue-400 text-blue-700{% endif %} flex items-start">
-        <div class="flex-shrink-0 mr-3 mt-0.5">
-            {% if message.tags == 'error' %}
-                <i class="fas fa-exclamation-triangle"></i>
-            {% elif message.tags == 'warning' %}
-                <i class="fas fa-exclamation-circle"></i>
-            {% elif message.tags == 'success' %}
-                <i class="fas fa-check-circle"></i>
-            {% else %}
-                <i class="fas fa-info-circle"></i>
-            {% endif %}
-        </div>
-        <div class="flex-1">
-            <p class="font-medium text-sm mb-1">
-                {% if message.tags == 'error' %}Error
-                {% elif message.tags == 'warning' %}Warning
-                {% elif message.tags == 'success' %}Success
-                {% else %}Info
+        {% if 'Welcome back' not in message.message %}
+        <div class="mb-4 px-4 py-3 rounded-lg border-l-4 shadow-md {% if message.tags == 'error' %}bg-red-50 border-red-400 text-red-700{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-400 text-yellow-700{% elif message.tags == 'success' %}bg-green-50 border-green-400 text-green-700{% else %}bg-blue-50 border-blue-400 text-blue-700{% endif %} flex items-start">
+            <div class="flex-shrink-0 mr-3 mt-0.5">
+                {% if message.tags == 'error' %}
+                    <i class="fas fa-exclamation-triangle"></i>
+                {% elif message.tags == 'warning' %}
+                    <i class="fas fa-exclamation-circle"></i>
+                {% elif message.tags == 'success' %}
+                    <i class="fas fa-check-circle"></i>
+                {% else %}
+                    <i class="fas fa-info-circle"></i>
                 {% endif %}
-            </p>
-            <p class="text-sm">{{ message }}</p>
+            </div>
+            <div class="flex-1">
+                <p class="font-medium text-sm mb-1">
+                    {% if message.tags == 'error' %}Error
+                    {% elif message.tags == 'warning' %}Warning
+                    {% elif message.tags == 'success' %}Success
+                    {% else %}Info
+                    {% endif %}
+                </p>
+                <p class="text-sm">{{ message }}</p>
+            </div>
+            <button type="button" class="flex-shrink-0 ml-3 text-gray-400 hover:text-gray-600" onclick="this.parentElement.style.display='none';">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
-        <button type="button" class="flex-shrink-0 ml-3 text-gray-400 hover:text-gray-600" onclick="this.parentElement.style.display='none';">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
+        {% endif %}
     {% endfor %}
 </div>
 {% endif %}
