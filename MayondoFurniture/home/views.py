@@ -37,7 +37,7 @@ from datetime import datetime
 
 # Local application imports
 from home.models import Sale, Stock, Notification
-from .forms import SaleForm, StockForm
+from .forms import SaleForm, StockForm, LoginForm
 
 # ===== SECURITY DECORATORS =====
 # Decorator to restrict access to managers only
@@ -128,54 +128,63 @@ def landingPage(request):
 
 def loginPage(request):
     """
-    Login Page View - Handles user authentication
+    Login Page View - Handles user authentication using LoginForm
     Supports role-based login (Manager/Employee) with group verification
-    Redirects to dashboard on successful login, shows error messages on failure
+    Redirects to dashboard on successful login, shows form errors on failure
     """
     if request.method == "POST":
-        # Get login credentials from form
-        username = request.POST.get("username")
-        password = request.POST.get("password")
-        role = request.POST.get("role")  # Manager or Employee role selection
+        print("DEBUG: POST request received")
+        form = LoginForm(request.POST)
+        print(f"DEBUG: Form created with data: {request.POST}")
+        
+        if form.is_valid():
+            print("DEBUG: Form is valid")
+            # Get cleaned data from form
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            role = form.cleaned_data['role']
 
-        # Validate required fields
-        if not username or not password or not role:
-            messages.error(request, "Please fill in all required fields.")
-            return render(request, "login.html")
+            # Attempt to authenticate user
+            user = authenticate(request, username=username, password=password)
 
-        # Attempt to authenticate user
-        user = authenticate(request, username=username, password=password)
-
-        if user is not None:
-            # Check if user account is active
-            if not user.is_active:
-                messages.error(request, "Your account has been deactivated. Please contact an administrator.")
-                return render(request, "login.html")
-            
-            # Verify user belongs to the selected role group
-            if user.groups.filter(name=role).exists():
-                login(request, user)  # Start user session
-                # Only show welcome message once per login session
-                if not request.session.get('welcome_shown', False):
-                    messages.success(request, f"Welcome back, {user.get_full_name() or user.username}!")
-                    request.session['welcome_shown'] = True
-                return redirect("dashboard")  # Successful login - go to dashboard
+            if user is not None:
+                # Check if user account is active
+                if not user.is_active:
+                    form.add_error(None, "Your account has been deactivated. Please contact an administrator.")
+                    return render(request, "login.html", {'form': form})
+                
+                # Verify user belongs to the selected role group
+                if user.groups.filter(name=role).exists():
+                    login(request, user)  # Start user session
+                    # Only show welcome message once per login session
+                    if not request.session.get('welcome_shown', False):
+                        messages.success(request, f"Welcome back, {user.get_full_name() or user.username}!")
+                        request.session['welcome_shown'] = True
+                    return redirect("dashboard")  # Successful login - go to dashboard
+                else:
+                    form.add_error('role', f"Access denied. You are not authorized for the '{role}' role. Please check your role selection or contact an administrator.")
+                    return render(request, "login.html", {'form': form})
             else:
-                messages.error(request, f"Access denied. You are not authorized for the '{role}' role. Please check your role selection or contact an administrator.")
-                return render(request, "login.html")
+                # Check if username exists to provide more specific error
+                from django.contrib.auth.models import User
+                try:
+                    existing_user = User.objects.get(username=username)
+                    form.add_error('password', "Incorrect password. Please try again or contact an administrator if you've forgotten your password.")
+                except User.DoesNotExist:
+                    form.add_error('username', "Username not found. Please check your username or contact an administrator for account registration.")
+                
+                return render(request, "login.html", {'form': form})
         else:
-            # Check if username exists to provide more specific error
-            from django.contrib.auth.models import User
-            try:
-                existing_user = User.objects.get(username=username)
-                messages.error(request, "Incorrect password. Please try again or contact an administrator if you've forgotten your password.")
-            except User.DoesNotExist:
-                messages.error(request, "Username not found. Please check your username or contact an administrator for account registration.")
-            
-            return render(request, "login.html")
+            # Form validation failed - render form with errors
+            print(f"DEBUG: Form validation failed. Errors: {form.errors}")
+            return render(request, "login.html", {'form': form})
+    else:
+        # GET request - display empty login form
+        print("DEBUG: GET request - creating empty form")
+        form = LoginForm()
 
-    # GET request - display login form
-    return render(request, "login.html")
+    print("DEBUG: Rendering template with form")
+    return render(request, "login.html", {'form': form})
 
 
 @never_cache
@@ -907,7 +916,7 @@ def addSale(request):
             if total_available == quantity_to_sell:
                 messages.warning(
                     request,
-                    f'⚠️ Note: This sale will completely exhaust the stock for {product_name} ({product_type}). '
+                    f'⚠️ Note: This sale has completely exhausted the stock for {product_name} ({product_type}). '
                     f'Consider restocking this item soon.'
                 )
 
@@ -1005,12 +1014,11 @@ def editSale(request, product_id):
 @login_required
 @user_passes_test(is_employee_or_manager)
 def viewSingleSale(request, product_id):
-    """
-    IMPROVED: View sale details without unnecessary form overhead
-    Just display the data cleanly - no form needed for view-only content
-    """
+    
+    #IMPROVED: View sale details 
+    
     sale = get_object_or_404(Sale, id=product_id)
-    context = {'sale': sale}  # Simple and clean - no form needed!
+    context = {'sale': sale}  
     return render(request, 'view_sale.html', context)
 
 @login_required

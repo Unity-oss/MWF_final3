@@ -329,7 +329,8 @@ class LoginForm(forms.Form):
         widget=forms.TextInput(attrs={
             'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-cordes-dark focus:border-transparent outline-none transition duration-150 ease-in-out text-lg',
             'placeholder': 'Enter your username',
-            'autocomplete': 'username'
+            'autocomplete': 'username',
+            'novalidate': 'novalidate'
         }),
         error_messages={
             'required': 'Username is required.',
@@ -341,8 +342,7 @@ class LoginForm(forms.Form):
         widget=forms.PasswordInput(attrs={
             'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-cordes-dark focus:border-transparent outline-none transition duration-150 ease-in-out text-lg',
             'placeholder': 'Enter your password',
-            'autocomplete': 'current-password',
-            'minlength': '6'
+            'autocomplete': 'current-password'
         }),
         error_messages={
             'required': 'Password is required.'
