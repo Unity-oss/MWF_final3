@@ -75,6 +75,10 @@ class Sale(models.Model):
     quantity = models.IntegerField()  # Number of items sold
     date = models.DateField(null=False)  # When the sale occurred
     
+    # Pricing information
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Price per unit in dollars")
+    total_sales_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, help_text="Automatically calculated from quantity × unit price")
+    
     # Payment and logistics
     payment_type = models.TextField(choices = PAYMENT_CHOICES)  # How customer paid
     sales_agent = models.CharField(max_length=50)  # Employee who made the sale
@@ -100,6 +104,16 @@ class Sale(models.Model):
             raise ValidationError({
                 'quantity': 'Quantity must be greater than 0. Please enter a positive number.'
             })
+        
+        # Validate unit price is positive
+        if self.unit_price is not None and self.unit_price <= 0:
+            raise ValidationError({
+                'unit_price': 'Unit price must be greater than 0. Please enter a positive amount.'
+            })
+        
+        # Auto-calculate total sales amount
+        if self.quantity is not None and self.unit_price is not None:
+            self.total_sales_amount = self.quantity * self.unit_price
         
         # Validate product details if provided (they have defaults, so this is optional validation)
         if self.product_name and self.product_name not in [choice[0] for choice in self.CUSTOMER_CHOICES]:

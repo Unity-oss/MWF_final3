@@ -39,8 +39,8 @@ class SaleForm(forms.ModelForm):
     """
     class Meta:
         model = Sale   # This form is based on the Sale model
-        fields = ['customer_name', 'product_name', 'product_type', 'quantity', 'date', 
-                 'payment_type', 'sales_agent', 'transport_required']
+        fields = ['customer_name', 'product_name', 'product_type', 'quantity', 'unit_price', 'total_sales_amount', 
+                 'date', 'payment_type', 'sales_agent', 'transport_required']
         # Using separate product_name and product_type fields for better display
         
         # Custom error messages for better user experience
@@ -64,6 +64,15 @@ class SaleForm(forms.ModelForm):
                 'min_value': 'Quantity must be at least 1. Cannot sell zero or negative items.',
                 'max_value': 'Quantity is too large. Please check available stock.',
             },
+            'unit_price': {
+                'required': 'Unit price is required. Please enter the price per item.',
+                'invalid': 'Please enter a valid price amount.',
+                'min_value': 'Unit price must be greater than 0.',
+                'max_digits': 'Price is too large. Please enter a reasonable amount.',
+            },
+            'total_sales_amount': {
+                'invalid': 'Total sales amount calculation error.',
+            },
             'date': {
                 'required': 'Sale date is required. Please select the date of sale.',
                 'invalid': 'Please enter a valid date in the format YYYY-MM-DD.',
@@ -85,6 +94,8 @@ class SaleForm(forms.ModelForm):
             'product_name': 'Product Name',
             'product_type': 'Product Type',
             'quantity': 'Quantity to Sell',
+            'unit_price': 'Unit Price ($)',
+            'total_sales_amount': 'Total Sales Amount ($)',
             'date': 'Sale Date',
             'payment_type': 'Payment Method',
             'sales_agent': 'Sales Agent Name',
@@ -97,6 +108,8 @@ class SaleForm(forms.ModelForm):
             'product_name': 'Select the product name being sold (Timber, Sofa, Tables, etc.)',
             'product_type': 'Select whether this is a Wood or Furniture product',
             'quantity': 'Number of items to sell (must be available in stock)',
+            'unit_price': 'Price per individual item in dollars',
+            'total_sales_amount': 'Automatically calculated when you enter quantity and unit price',
             'date': 'Date when this sale occurred (cannot be in the future)',
             'payment_type': 'How the customer is paying for this purchase',
             'sales_agent': 'Name of the employee making this sale',
@@ -111,7 +124,25 @@ class SaleForm(forms.ModelForm):
             'quantity': forms.NumberInput(attrs={
                 'min': '1', 
                 'step': '1',
-                'title': 'Quantity must be greater than 0'
+                'title': 'Quantity must be greater than 0',
+                'id': 'id_quantity',
+                'onchange': 'calculateTotal()',
+                'oninput': 'calculateTotal()'
+            }),
+            'unit_price': forms.NumberInput(attrs={
+                'min': '0.01',
+                'step': '0.01',
+                'title': 'Unit price must be greater than 0',
+                'id': 'id_unit_price',
+                'onchange': 'calculateTotal()',
+                'oninput': 'calculateTotal()'
+            }),
+            'total_sales_amount': forms.NumberInput(attrs={
+                'readonly': 'readonly',
+                'id': 'id_total_sales_amount',
+                'title': 'This field is automatically calculated',
+                'class': 'readonly-field',
+                'tabindex': '-1'
             }),
             'transport_required': forms.CheckboxInput(),
         }
@@ -162,10 +193,14 @@ class SaleForm(forms.ModelForm):
         })
         
         # Add required attributes for client-side validation
-        required_fields = ['customer_name', 'product_name', 'product_type', 'quantity', 'date', 'payment_type', 'sales_agent']
+        required_fields = ['customer_name', 'product_name', 'product_type', 'quantity', 'unit_price', 'date', 'payment_type', 'sales_agent']
         for field_name in required_fields:
             if field_name in self.fields:
                 self.fields[field_name].widget.attrs['required'] = 'required'
+        
+        # Make total_sales_amount field read-only in the form
+        if 'total_sales_amount' in self.fields:
+            self.fields['total_sales_amount'].widget.attrs['readonly'] = 'readonly'
         
         # Minimal crispy form setup - all layout handled by templates
         self.helper = FormHelper()

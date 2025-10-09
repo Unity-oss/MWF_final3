@@ -143,7 +143,7 @@ Key Features:
             <button onclick="toggleDropdown('users-dropdown')" class="flex items-center justify-between w-full px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
               <div class="flex items-center">
                 <i class="fas fa-users mr-3 text-gray-400 group-hover:text-white"></i>
-                Users
+                Staff
               </div>
               <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="users-dropdown-icon"></i>
             </button>
@@ -378,9 +378,9 @@ Key Features:
                 <p class="text-2xl font-bold text-gray-900 mt-2">UGX {{ data.total_revenue|floatformat:0|default:"0" }}</p>
               </div>
               <div
-                class="w-12 h-12 bg-cordes-blue bg-opacity-10 rounded-lg flex items-center justify-center"
-              >
-                <i class="fas fa-dollar-sign text-cordes-blue text-xl"></i>
+                class="w-12 h-12 bg-cordes-blue bg-opacity-10 rounded-lg flex items-center justify-center">
+                <img src="https://cdn-icons-png.flaticon.com/128/12652/12652727.png" alt="Cash icon" class=" w-8 h-8">
+              
               </div>
             </div>
           </div>
@@ -395,9 +395,9 @@ Key Features:
                 <p class="text-3xl font-bold text-gray-900 mt-2">{{ data.total_stock_items|default:"0" }}</p>
               </div>
               <div
-                class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center"
-              >
-                <i class="fa-solid fa-warehouse"></i>
+                class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <img src="https://cdn-icons-png.flaticon.com/128/2897/2897818.png" alt="Stock" class="w-8 h-8">
+              
               </div>
             </div>
           </div>
@@ -445,9 +445,8 @@ Key Features:
                 <p class="text-3xl font-bold text-gray-900 mt-2">{{ data.total_sales|default:"0" }}</p>
               </div>
               <div
-                class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center"
-              >
-                <i class="fa-solid fa-money-check-dollar"></i>
+                class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <img src="https://cdn-icons-png.flaticon.com/128/11000/11000643.png" alt="Total Stock" class="w-8 h-8">
               </div>
             </div>
           </div>

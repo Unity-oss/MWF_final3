@@ -50,7 +50,7 @@
     </div>
 </div>
 
-{# Quantity, Date, Payment Type (3 columns) #}
+{# Quantity, Unit Price, Total Sales Amount (3 columns) #}
 <div class="form-row mb-4">
     <div class="col-md-4">
         {{ form.quantity|as_crispy_field }}
@@ -59,12 +59,31 @@
         {% endif %}
     </div>
     <div class="col-md-4">
+        {{ form.unit_price|as_crispy_field }}
+        {% if form.unit_price.errors %}
+            <p class="text-red-600 text-sm">{{ form.unit_price.errors }}</p>
+        {% endif %}
+    </div>
+    <div class="col-md-4">
+        {{ form.total_sales_amount|as_crispy_field }}
+        {% if form.total_sales_amount.errors %}
+            <p class="text-red-600 text-sm">{{ form.total_sales_amount.errors }}</p>
+        {% endif %}
+        <small class="text-gray-500 mt-1 block">
+            <i class="fas fa-calculator mr-1"></i>Automatically calculated from quantity × unit price
+        </small>
+    </div>
+</div>
+
+{# Date and Payment Type (2 columns) #}
+<div class="form-row mb-4">
+    <div class="col-md-6">
         {{ form.date|as_crispy_field }}
         {% if form.date.errors %}
             <p class="text-red-600 text-sm">{{ form.date.errors }}</p>
         {% endif %}
     </div>
-    <div class="col-md-4">
+    <div class="col-md-6">
         {{ form.payment_type|as_crispy_field }}
         {% if form.payment_type.errors %}
             <p class="text-red-600 text-sm">{{ form.payment_type.errors }}</p>

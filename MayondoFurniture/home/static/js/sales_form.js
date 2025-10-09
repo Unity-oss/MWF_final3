@@ -18,6 +18,8 @@ class SalesFormManager {
             productName: null,
             productType: null,
             quantity: null,
+            unitPrice: null,
+            totalSalesAmount: null,
             form: null
         };
         
@@ -69,6 +71,8 @@ class SalesFormManager {
             productName: document.querySelector('[name="product_name"]'),
             productType: document.querySelector('[name="product_type"]'),
             quantity: document.querySelector('[name="quantity"]'),
+            unitPrice: document.querySelector('[name="unit_price"]'),
+            totalSalesAmount: document.querySelector('[name="total_sales_amount"]'),
             form: document.querySelector('form.crispy-form')
         };
 
@@ -113,7 +117,7 @@ class SalesFormManager {
      * Set up event listeners for form interactions
      */
     setupEventListeners() {
-        const { productName, productType, quantity } = this.formElements;
+        const { productName, productType, quantity, unitPrice } = this.formElements;
 
         // Product selection changes
         if (productName) {
@@ -124,10 +128,22 @@ class SalesFormManager {
             productType.addEventListener('change', () => this.updateQuantityLimits());
         }
 
-        // Quantity input validation
+        // Quantity input validation and calculation
         if (quantity) {
-            quantity.addEventListener('input', () => this.validateQuantityInput());
-            quantity.addEventListener('blur', () => this.validateQuantityInput());
+            quantity.addEventListener('input', () => {
+                this.validateQuantityInput();
+                this.calculateTotal();
+            });
+            quantity.addEventListener('blur', () => {
+                this.validateQuantityInput();
+                this.calculateTotal();
+            });
+        }
+
+        // Unit price input and calculation
+        if (unitPrice) {
+            unitPrice.addEventListener('input', () => this.calculateTotal());
+            unitPrice.addEventListener('blur', () => this.calculateTotal());
         }
 
         // Form submission validation
@@ -320,6 +336,39 @@ class SalesFormManager {
     }
 
     /**
+     * Calculate total sales amount automatically
+     */
+    calculateTotal() {
+        const { quantity, unitPrice, totalSalesAmount } = this.formElements;
+        
+        if (!quantity || !unitPrice || !totalSalesAmount) {
+            console.warn('⚠️ Some form elements not found for calculation');
+            return;
+        }
+
+        const quantityValue = parseFloat(quantity.value) || 0;
+        const unitPriceValue = parseFloat(unitPrice.value) || 0;
+        
+        console.log(`📊 Calculating total: ${quantityValue} × ${unitPriceValue}`);
+        
+        if (quantityValue > 0 && unitPriceValue > 0) {
+            const total = quantityValue * unitPriceValue;
+            totalSalesAmount.value = total.toFixed(2);
+            
+            console.log(`✅ Total calculated: ${total.toFixed(2)}`);
+            
+            // Visual feedback for successful calculation
+            totalSalesAmount.style.backgroundColor = '#d4edda';
+            setTimeout(() => {
+                totalSalesAmount.style.backgroundColor = '';
+            }, 1000);
+        } else {
+            totalSalesAmount.value = '0.00';
+            console.log('ℹ️ Setting total to 0.00 (invalid inputs)');
+        }
+    }
+
+    /**
      * Update stock data (for external calls)
      */
     updateStockData(newStockData) {
@@ -330,10 +379,16 @@ class SalesFormManager {
 }
 
 // Initialize when DOM is ready
-let salesFormManager;
 document.addEventListener('DOMContentLoaded', () => {
-    salesFormManager = new SalesFormManager();
+    window.salesFormManager = new SalesFormManager();
 });
 
 // Export for external access
 window.SalesFormManager = SalesFormManager;
+
+// Global function for form widgets to call
+function calculateTotal() {
+    if (window.salesFormManager) {
+        window.salesFormManager.calculateTotal();
+    }
+}
