@@ -22,7 +22,7 @@
   <h6>Product Name</h6>
   <p>{{ selected.product_name }}</p>
   <h6>Supplier</h6>
-  <p>{{ selected.supplier_name }}</p>
+  <p>{{ selected.supplier.name|default:"N/A" }}</p>
   <h6>Product Type</h6>
   <p>{{ selected.product_type }}</p>
   <h6>Quantity</h6>

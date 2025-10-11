@@ -139,6 +139,8 @@
             <th class="p-3 text-left border-b border-gray-300 text-gray-800">Product</th>
             <th class="p-3 text-left border-b border-gray-300 text-gray-800">Type</th>
             <th class="p-3 text-left border-b border-gray-300 text-gray-800">Qty</th>
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Unit Price</th>
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Total Amount</th>
             <th class="p-3 text-left border-b border-gray-300 text-gray-800">Date</th>
             <th class="p-3 text-left border-b border-gray-300 text-gray-800">Payment</th>
             <th class="p-3 text-left border-b border-gray-300 text-gray-800">Agent</th>
@@ -148,7 +150,7 @@
         <tbody>
         {% for sale in sales %}
         <tr class="hover:bg-gray-50">
-          <td class="p-3 border-b border-gray-200">{{ sale.customer_name }}</td>
+          <td class="p-3 border-b border-gray-200">{{ sale.customer.name|default:"N/A" }}</td>
           <td class="p-3 border-b border-gray-200">
             {{ sale.product_name|default:"N/A" }}
           </td>
@@ -156,6 +158,8 @@
             {{ sale.product_type|default:"N/A" }}
           </td>
           <td class="p-3 border-b border-gray-200">{{ sale.quantity }}</td>
+          <td class="p-3 border-b border-gray-200">UGX {{ sale.unit_price|floatformat:0|default:"N/A" }}</td>
+          <td class="p-3 border-b border-gray-200 font-medium">UGX {{ sale.total_sales_amount|floatformat:0|default:"N/A" }}</td>
           <td class="p-3 border-b border-gray-200">{{ sale.date|date:"d/m/Y" }}</td>
           <td class="p-3 border-b border-gray-200">{{ sale.payment_type }}</td>
           <td class="p-3 border-b border-gray-200">{{ sale.sales_agent }}</td>
@@ -167,7 +171,7 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="8" class="p-3 border-b border-gray-200 text-center text-gray-500">
+          <td colspan="10" class="p-3 border-b border-gray-200 text-center text-gray-500">
             <div class="py-4">
               <i class="fas fa-inbox text-gray-400 text-2xl mb-2"></i>
               <p class="text-gray-500">No sales records found{% if is_filtered %} for the selected date range{% endif %}.</p>

@@ -20,6 +20,7 @@ class SalesFormManager {
             quantity: null,
             unitPrice: null,
             totalSalesAmount: null,
+            transportRequired: null,
             form: null
         };
         
@@ -73,6 +74,7 @@ class SalesFormManager {
             quantity: document.querySelector('[name="quantity"]'),
             unitPrice: document.querySelector('[name="unit_price"]'),
             totalSalesAmount: document.querySelector('[name="total_sales_amount"]'),
+            transportRequired: document.querySelector('[name="transport_required"]'),
             form: document.querySelector('form.crispy-form')
         };
 
@@ -144,6 +146,11 @@ class SalesFormManager {
         if (unitPrice) {
             unitPrice.addEventListener('input', () => this.calculateTotal());
             unitPrice.addEventListener('blur', () => this.calculateTotal());
+        }
+
+        // Transport required checkbox
+        if (this.formElements.transportRequired) {
+            this.formElements.transportRequired.addEventListener('change', () => this.calculateTotal());
         }
 
         // Form submission validation
@@ -339,7 +346,7 @@ class SalesFormManager {
      * Calculate total sales amount automatically
      */
     calculateTotal() {
-        const { quantity, unitPrice, totalSalesAmount } = this.formElements;
+        const { quantity, unitPrice, totalSalesAmount, transportRequired } = this.formElements;
         
         if (!quantity || !unitPrice || !totalSalesAmount) {
             console.warn(' Some form elements not found for calculation');
@@ -348,14 +355,24 @@ class SalesFormManager {
 
         const quantityValue = parseFloat(quantity.value) || 0;
         const unitPriceValue = parseFloat(unitPrice.value) || 0;
+        const isTransportRequired = transportRequired ? transportRequired.checked : false;
         
-        console.log(` Calculating total: ${quantityValue} × ${unitPriceValue}`);
+        console.log(` Calculating total: ${quantityValue} × ${unitPriceValue} (transport: ${isTransportRequired})`);
         
         if (quantityValue > 0 && unitPriceValue > 0) {
-            const total = quantityValue * unitPriceValue;
+            // Calculate base amount
+            let total = quantityValue * unitPriceValue;
+            
+            // Add 5% transport fee if required
+            if (isTransportRequired) {
+                const transportFee = total * 0.05;
+                total += transportFee;
+                console.log(` Transport fee added: ${transportFee.toFixed(2)} (5%)`);
+            }
+            
             totalSalesAmount.value = total.toFixed(2);
             
-            console.log(` Total calculated: ${total.toFixed(2)}`);
+            console.log(` Final total: ${total.toFixed(2)}`);
             
             // Visual feedback for successful calculation
             totalSalesAmount.style.backgroundColor = '#d4edda';

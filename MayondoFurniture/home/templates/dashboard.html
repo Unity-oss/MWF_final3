@@ -452,7 +452,8 @@ Key Features:
       <main class="p-6">
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          <!-- Revenue Card -->
+          {% if is_manager %}
+          <!-- Revenue Card - Manager Only -->
           <div
             class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
           >
@@ -468,6 +469,7 @@ Key Features:
               </div>
             </div>
           </div>
+          {% endif %}
 
           <!-- Users Card -->
           <div
@@ -535,7 +537,8 @@ Key Features:
             </div>
           </div>
 
-          <!-- Profit Card -->
+          {% if is_manager %}
+          <!-- Profit Card - Manager Only -->
           <div
             class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow {% if data.profit < 0 %}border-red-300 bg-red-50{% elif data.profit > 0 %}border-green-300 bg-green-50{% endif %}"
           >
@@ -556,11 +559,6 @@ Key Features:
                 <p class="text-2xl font-bold {% if data.profit < 0 %}text-red-600{% elif data.profit > 0 %}text-green-600{% else %}text-gray-900{% endif %} mt-2">
                   UGX {{ data.profit|floatformat:0|default:"0" }}
                 </p>
-                {% if data.profit != 0 %}
-                  <p class="text-xs {% if data.profit < 0 %}text-red-600{% else %}text-green-600{% endif %} font-medium">
-                    Revenue: UGX {{ data.total_revenue|floatformat:0|default:"0" }} - Costs: UGX {{ data.total_cost_of_sales|floatformat:0|default:"0" }}
-                  </p>
-                {% endif %}
               </div>
               <div
                 class="w-12 h-12 {% if data.profit < 0 %}bg-red-100{% elif data.profit > 0 %}bg-green-100{% else %}bg-gray-100{% endif %} rounded-lg flex items-center justify-center"
@@ -575,6 +573,7 @@ Key Features:
               </div>
             </div>
           </div>
+          {% endif %}
         </div>
 
         <!-- Recent Orders Table -->
@@ -1143,19 +1142,49 @@ searchInput.addEventListener('input', function() {
           searchInput.parentElement.appendChild(resultsDiv);
         }
         let html = '';
-        if (data.sales.length === 0 && data.stock.length === 0) {
+        if (data.sales.length === 0 && data.stock.length === 0 && data.customers.length === 0 && data.suppliers.length === 0) {
           html = '<div class="p-4 text-gray-500">No results found.</div>';
         } else {
           if (data.sales.length > 0) {
             html += '<div class="p-2 font-bold text-cordes-blue">Sales</div>';
             data.sales.forEach(sale => {
-              html += `<div class='p-2 border-b'><span class='font-semibold'>${sale.product_name}</span> (ID: ${sale.product_id})<br><span class='text-xs text-gray-500'>Customer: ${sale.customer_name}, Agent: ${sale.sales_agent}</span></div>`;
+              html += `<div class='p-2 border-b hover:bg-gray-50 cursor-pointer' onclick="window.location.href='/viewSale/${sale.id}/'"}>
+                        <span class='font-semibold'>${sale.product_name}</span> (ID: ${sale.product_id})<br>
+                        <span class='text-xs text-gray-500'>Customer: ${sale.customer ? sale.customer.name : 'N/A'}, Agent: ${sale.sales_agent}</span>
+                      </div>`;
             });
           }
           if (data.stock.length > 0) {
             html += '<div class="p-2 font-bold text-cordes-blue">Stock</div>';
             data.stock.forEach(stock => {
-              html += `<div class='p-2 border-b'><span class='font-semibold'>${stock.product_name}</span> (ID: ${stock.product_id})<br><span class='text-xs text-gray-500'>Supplier: ${stock.supplier_name}</span></div>`;
+              html += `<div class='p-2 border-b hover:bg-gray-50 cursor-pointer' onclick="window.location.href='/viewStock/${stock.id}/'">
+                        <span class='font-semibold'>${stock.product_name}</span> (ID: ${stock.product_id})<br>
+                        <span class='text-xs text-gray-500'>Supplier: ${stock.supplier_name}</span>
+                      </div>`;
+            });
+          }
+          if (data.customers.length > 0) {
+            html += '<div class="p-2 font-bold text-cordes-blue">Customers</div>';
+            data.customers.forEach(customer => {
+              html += `<div class='p-2 border-b hover:bg-gray-50 cursor-pointer' onclick="window.location.href='/viewCustomer/${customer.id}/'">
+                        <span class='font-semibold'>${customer.name}</span><br>
+                        <span class='text-xs text-gray-500'>
+                          ${customer.phone ? 'Phone: ' + customer.phone : ''}
+                          ${customer.email ? (customer.phone ? ' • ' : '') + 'Email: ' + customer.email : ''}
+                        </span>
+                      </div>`;
+            });
+          }
+          if (data.suppliers.length > 0) {
+            html += '<div class="p-2 font-bold text-cordes-blue">Suppliers</div>';
+            data.suppliers.forEach(supplier => {
+              html += `<div class='p-2 border-b hover:bg-gray-50 cursor-pointer' onclick="window.location.href='/viewSupplier/${supplier.id}/'">
+                        <span class='font-semibold'>${supplier.name}</span><br>
+                        <span class='text-xs text-gray-500'>
+                          ${supplier.contact_person ? 'Contact: ' + supplier.contact_person : ''}
+                          ${supplier.phone ? (supplier.contact_person ? ' • ' : '') + 'Phone: ' + supplier.phone : ''}
+                        </span>
+                      </div>`;
             });
           }
         }

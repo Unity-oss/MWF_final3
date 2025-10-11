@@ -41,7 +41,7 @@
                 <!-- Customer Name -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Customer Name</label>
-                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{{ sale.customer_name }}</p>
+                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{{ sale.customer.name|default:"N/A" }}</p>
                 </div>
                 
                 <!-- Product -->
@@ -61,14 +61,14 @@
                 <!-- Unit Price -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Unit Price</label>
-                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">${{ sale.unit_price }}</p>
+                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">UGX {{ sale.unit_price|floatformat:0 }}</p>
                 </div>
                 
                 <!-- Total Sales Amount -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Total Sales Amount</label>
                     <p class="mt-1 text-sm text-gray-900 bg-green-50 p-2 rounded font-semibold text-green-800">
-                        <i class="fas fa-dollar-sign mr-1"></i>${{ sale.total_sales_amount }}
+                        UGX {{ sale.total_sales_amount|floatformat:0 }}
                     </p>
                 </div>
                 

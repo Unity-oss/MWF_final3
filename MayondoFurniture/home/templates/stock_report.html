@@ -150,8 +150,8 @@
             <th class="p-3 text-left border-b border-gray-300 text-gray-800">Qty</th>
             <th class="p-3 text-left border-b border-gray-300 text-gray-800">Date Added</th>
             <th class="p-3 text-left border-b border-gray-300 text-gray-800">Supplier</th>
-            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Cost (UGX)</th>
-            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Price (UGX)</th>
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Unit Cost (UGX)</th>
+            <th class="p-3 text-left border-b border-gray-300 text-gray-800">Total Cost (UGX)</th>
             <th class="p-3 text-left border-b border-gray-300 text-gray-800">Origin</th>
           </tr>
         </thead>
@@ -166,9 +166,9 @@
           </td>
           <td class="p-3 border-b border-gray-200">{{ stock.quantity }}</td>
           <td class="p-3 border-b border-gray-200">{{ stock.date|date:"d/m/Y" }}</td>
-          <td class="p-3 border-b border-gray-200">{{ stock.supplier_name }}</td>
-          <td class="p-3 border-b border-gray-200">{{ stock.cost }}</td>
-          <td class="p-3 border-b border-gray-200">{{ stock.price }}</td>
+          <td class="p-3 border-b border-gray-200">{{ stock.supplier.name|default:"N/A" }}</td>
+          <td class="p-3 border-b border-gray-200">{{ stock.unit_cost }}</td>
+          <td class="p-3 border-b border-gray-200">{{ stock.total_cost }}</td>
           <td class="p-3 border-b border-gray-200">
             <span class="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
               {{ stock.origin }}

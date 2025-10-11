@@ -57,7 +57,7 @@
                 <!-- Supplier -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Supplier Name</label>
-                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{{ stock.supplier_name }}</p>
+                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{{ stock.supplier.name|default:"N/A" }}</p>
                 </div>
                 
                 <!-- Cost -->

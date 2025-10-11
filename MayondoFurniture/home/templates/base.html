@@ -105,6 +105,38 @@ can extend this base and override specific blocks.
         </div>
       </li>
       
+      <!-- Customers Dropdown -->
+      <li class="relative">
+        <button onclick="toggleHeaderDropdown('header-customers-dropdown')" class="flex items-center px-3 py-2 rounded-md font-medium hover:bg-cordes-blue transition-colors duration-300 no-underline text-white">
+          Customers
+          <i class="fas fa-chevron-down ml-1 text-xs transition-transform duration-200" id="header-customers-dropdown-icon"></i>
+        </button>
+        <div id="header-customers-dropdown" class="hidden absolute top-full left-0 mt-1 w-48 bg-white shadow-lg rounded-lg border border-gray-200 z-50">
+          <a href="/addCustomer/" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors text-sm no-underline">
+            <i class="fas fa-user-plus mr-2 text-xs"></i>Add Customer
+          </a>
+          <a href="/customerList/" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors text-sm no-underline">
+            <i class="fas fa-users mr-2 text-xs"></i>All Customers
+          </a>
+        </div>
+      </li>
+      
+      <!-- Suppliers Dropdown -->
+      <li class="relative">
+        <button onclick="toggleHeaderDropdown('header-suppliers-dropdown')" class="flex items-center px-3 py-2 rounded-md font-medium hover:bg-cordes-blue transition-colors duration-300 no-underline text-white">
+          Suppliers
+          <i class="fas fa-chevron-down ml-1 text-xs transition-transform duration-200" id="header-suppliers-dropdown-icon"></i>
+        </button>
+        <div id="header-suppliers-dropdown" class="hidden absolute top-full left-0 mt-1 w-48 bg-white shadow-lg rounded-lg border border-gray-200 z-50">
+          <a href="/addSupplier/" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors text-sm no-underline">
+            <i class="fas fa-truck mr-2 text-xs"></i>Add Supplier
+          </a>
+          <a href="/supplierList/" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors text-sm no-underline">
+            <i class="fas fa-industry mr-2 text-xs"></i>All Suppliers
+          </a>
+        </div>
+      </li>
+      
       <!-- Reports Dropdown - Only visible to Managers -->
       {% if is_manager %}
       <li class="relative">

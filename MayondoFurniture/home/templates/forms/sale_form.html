@@ -27,9 +27,9 @@
 {# Customer Name (full width) #}
 <div class="form-row mb-4">
     <div class="col-12">
-        {{ form.customer_name|as_crispy_field }}
-        {% if form.customer_name.errors %}
-            <p class="text-red-600 text-sm">{{ form.customer_name.errors }}</p>
+        {{ form.customer|as_crispy_field }}
+        {% if form.customer.errors %}
+            <p class="text-red-600 text-sm">{{ form.customer.errors }}</p>
         {% endif %}
     </div>
 </div>

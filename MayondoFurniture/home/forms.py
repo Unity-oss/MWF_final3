@@ -37,19 +37,39 @@ class SaleForm(forms.ModelForm):
     Features professional styling with Tailwind CSS integration
     Includes validation and user-friendly field layouts
     """
+    
+    # Override customer field to use dropdown of registered customers
+    customer = forms.ModelChoiceField(
+        queryset=Customer.objects.all().order_by('name'),
+        empty_label="-- Select Customer --",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent',
+            'title': 'Select a registered customer from the dropdown'
+        }),
+        help_text='Select from registered customers. If no customers are available, please add a new customer first.',
+        error_messages={
+            'required': 'Please select a customer from the dropdown.',
+            'invalid_choice': 'Please select a valid customer from the list.'
+        }
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Update help text based on available customers
+        if not Customer.objects.exists():
+            self.fields['customer'].empty_label = "-- No customers available. Add a customer first --"
+            self.fields['customer'].help_text = 'No customers are registered yet. Please add a customer before creating a sale.'
+    
     class Meta:
         model = Sale   # This form is based on the Sale model
-        fields = ['customer_name', 'product_name', 'product_type', 'quantity', 'unit_price', 'total_sales_amount', 
+        fields = ['customer', 'product_name', 'product_type', 'quantity', 'unit_price', 'total_sales_amount', 
                  'date', 'payment_type', 'sales_agent', 'transport_required']
         # Using separate product_name and product_type fields for better display
         
         # Custom error messages for better user experience
         error_messages = {
-            'customer_name': {
-                'required': 'Customer name is required. Please enter the customer\'s full name.',
-                'max_length': 'Customer name is too long. Please use 100 characters or less.',
-                'invalid': 'Please enter a valid customer name.',
-            },
+            # customer_name errors are now handled in the field definition above
             'product_name': {
                 'required': 'Product name is required. Please select a product category.',
                 'invalid_choice': 'Invalid product selection. Please choose from available categories.',
@@ -90,12 +110,12 @@ class SaleForm(forms.ModelForm):
         
         # Custom field labels for better clarity
         labels = {
-            'customer_name': 'Customer Full Name',
+            'customer': 'Customer Full Name',
             'product_name': 'Product Name',
             'product_type': 'Product Type',
             'quantity': 'Quantity to Sell',
-            'unit_price': 'Unit Price ($)',
-            'total_sales_amount': 'Total Sales Amount ($)',
+            'unit_price': 'Unit Price (UGX)',
+            'total_sales_amount': 'Total Sales Amount (UGX)',
             'date': 'Sale Date',
             'payment_type': 'Payment Method',
             'sales_agent': 'Sales Agent Name',
@@ -104,11 +124,11 @@ class SaleForm(forms.ModelForm):
         
         # Helpful text to guide users
         help_texts = {
-            'customer_name': 'Enter the full name of the customer making this purchase',
+            # customer_name help text is now handled in the field definition above
             'product_name': 'Select the product name being sold (Timber, Sofa, Tables, etc.)',
             'product_type': 'Select whether this is a Wood or Furniture product',
             'quantity': 'Number of items to sell (must be available in stock)',
-            'unit_price': 'Price per individual item in dollars',
+            'unit_price': 'Price per individual item in Uganda Shillings (UGX)',
             'total_sales_amount': 'Automatically calculated when you enter quantity and unit price',
             'date': 'Date when this sale occurred (cannot be in the future)',
             'payment_type': 'How the customer is paying for this purchase',
@@ -130,8 +150,8 @@ class SaleForm(forms.ModelForm):
                 'oninput': 'calculateTotal()'
             }),
             'unit_price': forms.NumberInput(attrs={
-                'min': '0.01',
-                'step': '0.01',
+                'min': '0',
+                'step': '0',
                 'title': 'Unit price must be greater than 0',
                 'id': 'id_unit_price',
                 'onchange': 'calculateTotal()',
@@ -224,9 +244,34 @@ class StockForm(forms.ModelForm):
     """
     Stock Form - Creates and edits stock records
     """
+    
+    # Override supplier field to use dropdown of registered suppliers
+    supplier = forms.ModelChoiceField(
+        queryset=Supplier.objects.all().order_by('name'),
+        empty_label="-- Select Supplier --",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent',
+            'title': 'Select a registered supplier from the dropdown'
+        }),
+        help_text='Select from registered suppliers. If no suppliers are available, please add a new supplier first.',
+        error_messages={
+            'required': 'Please select a supplier from the dropdown.',
+            'invalid_choice': 'Please select a valid supplier from the list.'
+        }
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Update help text based on available suppliers
+        if not Supplier.objects.exists():
+            self.fields['supplier'].empty_label = "-- No suppliers available. Add a supplier first --"
+            self.fields['supplier'].help_text = 'No suppliers are registered yet. Please add a supplier before creating stock entries.'
+
+    
     class Meta:
         model = Stock   # Based on Stock model
-        fields = ['product_name', 'product_type', 'quantity', 'date', 'supplier_name', 'unit_cost', 'total_cost', 'origin']
+        fields = ['product_name', 'product_type', 'quantity', 'date', 'supplier', 'unit_cost', 'total_cost', 'origin']
         # Using separate product_name and product_type fields for better display
         
         # Custom error messages for better user experience
@@ -249,10 +294,7 @@ class StockForm(forms.ModelForm):
                 'required': 'Stock date is required. Please select when the stock was received.',
                 'invalid': 'Please enter a valid date in the format YYYY-MM-DD.',
             },
-            'supplier_name': {
-                'required': 'Supplier name is required. Please select who provided this stock.',
-                'invalid_choice': 'Invalid supplier selection. Please choose from available suppliers.',
-            },
+            # supplier_name errors are now handled in the field definition above
             'unit_cost': {
                 'required': 'Unit cost is required. Please enter the cost per item.',
                 'invalid': 'Please enter a valid unit cost amount.',
@@ -274,7 +316,7 @@ class StockForm(forms.ModelForm):
             'product_type': 'Product Type',
             'quantity': 'Stock Quantity',
             'date': 'Stock Date',
-            'supplier_name': 'Supplier Name',
+            'supplier': 'Supplier Name',
             'unit_cost': 'Unit Cost (UGX)',
             'total_cost': 'Total Cost (UGX)',
             'origin': 'Origin Region',
@@ -286,7 +328,7 @@ class StockForm(forms.ModelForm):
             'product_type': 'Select whether this is a Wood or Furniture product',
             'quantity': 'Number of items to add to stock',
             'date': 'Date when the stock was received (cannot be in the future)',
-            'supplier_name': 'Select the supplier who provided this stock',
+            # supplier help text is now handled in the field definition above
             'unit_cost': 'Cost per individual item in UGX',
             'total_cost': 'Automatically calculated when you enter quantity and unit cost',
             'origin': 'Region where this stock originated from',

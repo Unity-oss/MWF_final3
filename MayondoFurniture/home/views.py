@@ -407,7 +407,7 @@ def dashBoard(request):
     total_revenue = 0
     total_cost_of_sales = 0
     profit = 0
-    for sale in Sale.objects.all():
+    for sale in Sale.objects.select_related('customer').all():
         try:
             # IMPROVED: Use foreign key relationship for better performance
             if sale.product_ref:
@@ -459,7 +459,7 @@ def dashBoard(request):
 
     # Enrich sales data with amount calculations including transport fees
     sales_with_amounts = []
-    for sale in Sale.objects.all().order_by('-date'):
+    for sale in Sale.objects.select_related('customer').all().order_by('-date'):
         try:
             # IMPROVED: Use foreign key relationship (much faster and more reliable)
             if sale.product_ref:
@@ -494,7 +494,7 @@ def dashBoard(request):
 
     if is_manager:
         data = {
-            "stock": Stock.objects.all(),
+            "stock": Stock.objects.select_related('supplier').all(),
             "sales": sales_with_amounts,
             "employees": User.objects.filter(groups__name="Employee"),
             "total_sales": total_sales,
@@ -510,7 +510,7 @@ def dashBoard(request):
         }
     elif is_employee:
         data = {
-            "stock": Stock.objects.all(),
+            "stock": Stock.objects.select_related('supplier').all(),
             "sales": sales_with_amounts,
             "total_sales": total_sales,
             "total_stock_items": total_stock_items,
@@ -693,7 +693,7 @@ def sales_report(request):
     end_date = request.GET.get("end_date")
     
     # Get all sales, apply date filters if provided
-    all_sales = Sale.objects.all().order_by('-date')
+    all_sales = Sale.objects.select_related('customer').all().order_by('-date')
     
     if start_date:
         all_sales = all_sales.filter(date__gte=start_date)
@@ -727,7 +727,7 @@ def stock_report(request):
     end_date = request.GET.get("end_date")
     
     # Get all stock records
-    all_Stock = Stock.objects.all()
+    all_Stock = Stock.objects.select_related('supplier').all()
     
     # Get manager name (same as sales report)
     manager_name = f"{request.user.first_name} {request.user.last_name}".strip()
@@ -750,7 +750,7 @@ def stock_report(request):
 @login_required
 @user_passes_test(is_employee_or_manager)
 def saleRecord(request):
-    all_Sales = Sale.objects.all()
+    all_Sales = Sale.objects.select_related('customer').all()
     context = {
         "Sales" : all_Sales
     }
@@ -1047,7 +1047,7 @@ def saleReport(request):
     end_date = request.GET.get("end_date")
     
     # Get all sales, apply date filters if provided
-    all_sales = Sale.objects.all().order_by('-date')
+    all_sales = Sale.objects.select_related('customer').all().order_by('-date')
     
     if start_date:
         all_sales = all_sales.filter(date__gte=start_date)
@@ -1076,7 +1076,7 @@ def saleReport(request):
 @login_required
 @user_passes_test(is_employee_or_manager)
 def stockRecord(request):
-    all_Stocks = Stock.objects.all()
+    all_Stocks = Stock.objects.select_related('supplier').all()
     context = {
         "Stocks" : all_Stocks
     }
@@ -1166,7 +1166,7 @@ def updateStock(request, product_id):
 
 @manager_required
 def stockReport(request):
-    all_Stock = Stock.objects.all()
+    all_Stock = Stock.objects.select_related('supplier').all()
     
     # Get manager name (same as sales report)
     manager_name = f"{request.user.first_name} {request.user.last_name}".strip()
@@ -1205,6 +1205,20 @@ def addCustomer(request):
         form = CustomerForm(request.POST)
         if form.is_valid():
             customer = form.save()
+            
+            # Create notification for all managers
+            try:
+                managers = User.objects.filter(groups__name="Manager")
+                for manager in managers:
+                    Notification.objects.create(
+                        user=manager,
+                        message=f"🆕 NEW CUSTOMER: {customer.name} has been added by {request.user.get_full_name() or request.user.username}",
+                        activity_type="success"
+                    )
+            except Exception as e:
+                # Fail silently to avoid breaking the customer creation
+                print(f"Error creating customer notification: {e}")
+            
             messages.success(request, f'Customer "{customer.name}" added successfully!')
             return redirect('customerList')
         else:
@@ -1282,6 +1296,20 @@ def addSupplier(request):
         form = SupplierForm(request.POST)
         if form.is_valid():
             supplier = form.save()
+            
+            # Create notification for all managers
+            try:
+                managers = User.objects.filter(groups__name="Manager")
+                for manager in managers:
+                    Notification.objects.create(
+                        user=manager,
+                        message=f"🆕 NEW SUPPLIER: {supplier.name} has been added by {request.user.get_full_name() or request.user.username}",
+                        activity_type="success"
+                    )
+            except Exception as e:
+                # Fail silently to avoid breaking the supplier creation
+                print(f"Error creating supplier notification: {e}")
+            
             messages.success(request, f'Supplier "{supplier.name}" added successfully!')
             return redirect('supplierList')
         else:
@@ -1365,6 +1393,19 @@ def addEmployee(request):
             from django.contrib.auth.models import Group
             employee_group, created = Group.objects.get_or_create(name='Employee')
             user.groups.add(employee_group)
+            
+            # Create notification for all managers (including the current one who added the employee)
+            try:
+                managers = User.objects.filter(groups__name="Manager")
+                for manager in managers:
+                    Notification.objects.create(
+                        user=manager,
+                        message=f"👤 NEW EMPLOYEE: {first_name} {last_name} ({username}) has been added by {request.user.get_full_name() or request.user.username}",
+                        activity_type="success"
+                    )
+            except Exception as e:
+                # Fail silently to avoid breaking the employee creation
+                print(f"Error creating employee notification: {e}")
             
             messages.success(request, f'Employee "{first_name} {last_name}" added successfully!')
             return redirect('employee_list')

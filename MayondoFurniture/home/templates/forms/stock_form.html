@@ -44,9 +44,9 @@
     <!-- Supplier Name (full width) -->
     <div class="form-row mb-4">
         <div class="col-12">
-            {{ form.supplier_name|as_crispy_field }}
-            {% if form.supplier_name.errors %}
-                <p class="text-red-600 text-sm">{{ form.supplier_name.errors }}</p>
+            {{ form.supplier|as_crispy_field }}
+            {% if form.supplier.errors %}
+                <p class="text-red-600 text-sm">{{ form.supplier.errors }}</p>
             {% endif %}
         </div>
     </div>

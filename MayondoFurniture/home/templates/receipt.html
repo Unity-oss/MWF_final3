@@ -40,7 +40,7 @@
                 <div>{{ sale.date }}</div>
                 
                 <div><strong>Customer:</strong></div>
-                <div>{{ sale.customer_name }}</div>
+                <div>{{ sale.customer.name|default:"N/A" }}</div>
                 
                 <div><strong>Sales Agent:</strong></div>
                 <div>{{ sale.sales_agent }}</div>

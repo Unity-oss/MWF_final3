@@ -20,7 +20,7 @@
   <h6>Product ID</h6>
   <p>{{ selected.product_id }}</p>
   <h6>Customer Name</h6>
-  <p>{{ selected.customer_name }}</p>
+  <p>{{ selected.customer.name|default:"N/A" }}</p>
   <h6>Product Name</h6>
   <p>{{ selected.product_name }}</p>
   <h6>Product Type</h6>

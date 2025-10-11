@@ -94,7 +94,7 @@ class Sale(models.Model):
     product_id = models.CharField(max_length=50, blank=True, unique=True)
     
     # Customer information
-    customer_name = models.CharField(max_length=100)
+    customer = models.ForeignKey(Customer, on_delete=models.PROTECT, null=True, blank=True, help_text="Select the customer for this sale")
     
     # Product details - separate fields for better display and form handling
     product_name = models.CharField(max_length=100, choices=CUSTOMER_CHOICES, 
@@ -148,9 +148,15 @@ class Sale(models.Model):
                 'unit_price': 'Unit price must be greater than 0. Please enter a positive amount.'
             })
         
-        # Auto-calculate total sales amount
+        # Auto-calculate total sales amount including transport fee
         if self.quantity is not None and self.unit_price is not None:
-            self.total_sales_amount = self.quantity * self.unit_price
+            base_amount = self.quantity * self.unit_price
+            # Add 5% transport fee if transport is required
+            if self.transport_required:
+                transport_fee = base_amount * 0.05
+                self.total_sales_amount = base_amount + transport_fee
+            else:
+                self.total_sales_amount = base_amount
         
         # Validate product details if provided (they have defaults, so this is optional validation)
         if self.product_name and self.product_name not in [choice[0] for choice in self.CUSTOMER_CHOICES]:
@@ -205,6 +211,41 @@ class Sale(models.Model):
         
         super().save(*args, **kwargs)
 
+    @property
+    def customer_name(self):
+        """
+        Backward compatibility property to get customer name
+        """
+        return self.customer.name if self.customer else ""
+
+    @property
+    def base_amount(self):
+        """
+        Base amount before transport fee (quantity * unit_price)
+        """
+        if self.quantity and self.unit_price:
+            return self.quantity * self.unit_price
+        return 0
+
+    @property
+    def transport_fee(self):
+        """
+        Calculate 5% transport fee if transport is required
+        """
+        if self.transport_required and self.base_amount:
+            return self.base_amount * 0.05
+        return 0
+
+    @property
+    def final_amount(self):
+        """
+        Final amount including transport fee (same as total_sales_amount)
+        """
+        return self.base_amount + self.transport_fee
+
+    def __str__(self):
+        """String representation showing customer and product"""
+        return f"{self.customer_name} - {self.product_name} ({self.product_type})"
 
 
 class Stock(models.Model):
@@ -249,7 +290,7 @@ class Stock(models.Model):
     
     # Inventory management
     quantity = models.IntegerField()  # Number of items available
-    supplier_name = models.CharField(max_length=100, choices=SUPPLIER_CHOICES)  # Who supplied this product
+    supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT, null=True, blank=True, help_text="Select the supplier who provided this product")  # Dynamic supplier relationship
     
     # Pricing information
     unit_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, 
@@ -342,6 +383,17 @@ class Stock(models.Model):
             self.product_id = f'STK-{date_str}-{new_seq:04d}'
         
         super().save(*args, **kwargs)
+
+    @property
+    def supplier_name(self):
+        """
+        Backward compatibility property to get supplier name
+        """
+        return self.supplier.name if self.supplier else ""
+
+    def __str__(self):
+        """String representation showing product and supplier"""
+        return f"{self.product_name} ({self.product_type}) - {self.supplier_name}"
 
 
 class Notification(models.Model):
