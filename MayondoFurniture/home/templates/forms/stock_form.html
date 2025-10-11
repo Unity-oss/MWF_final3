@@ -67,15 +67,9 @@
         </div>
     </div>
 
-    <!-- Price and Origin (2 columns) -->
+    <!-- Origin (1 column) -->
     <div class="form-row mb-4">
-        <div class="col-md-6">
-            {{ form.price|as_crispy_field }}
-            {% if form.price.errors %}
-                <p class="text-red-600 text-sm">{{ form.price.errors }}</p>
-            {% endif %}
-        </div>
-        <div class="col-md-6">
+        <div class="col-12">
             {{ form.origin|as_crispy_field }}
             {% if form.origin.errors %}
                 <p class="text-red-600 text-sm">{{ form.origin.errors }}</p>

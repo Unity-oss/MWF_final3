@@ -183,6 +183,18 @@ class SaleForm(forms.ModelForm):
         else:
             self.fields['product_type'].widget = forms.Select(choices=[('', 'No product types in stock')])
         
+        # Create sales agent dropdown from employee list
+        from django.contrib.auth.models import User
+        employees = User.objects.filter(groups__name="Employee")
+        sales_agent_choices = [('', 'Select Sales Agent')]
+        for employee in employees:
+            # Use full name if available, otherwise username
+            display_name = f"{employee.first_name} {employee.last_name}".strip() or employee.username
+            sales_agent_choices.append((employee.username, display_name))
+        
+        # Update sales_agent field to be a dropdown
+        self.fields['sales_agent'].widget = forms.Select(choices=sales_agent_choices)
+        
         # Add data attributes for JavaScript quantity validation
         self.fields['product_name'].widget.attrs.update({
             'data-stock-info': 'true',
@@ -214,7 +226,7 @@ class StockForm(forms.ModelForm):
     """
     class Meta:
         model = Stock   # Based on Stock model
-        fields = ['product_name', 'product_type', 'quantity', 'date', 'supplier_name', 'unit_cost', 'total_cost', 'price', 'origin']
+        fields = ['product_name', 'product_type', 'quantity', 'date', 'supplier_name', 'unit_cost', 'total_cost', 'origin']
         # Using separate product_name and product_type fields for better display
         
         # Custom error messages for better user experience
@@ -238,9 +250,8 @@ class StockForm(forms.ModelForm):
                 'invalid': 'Please enter a valid date in the format YYYY-MM-DD.',
             },
             'supplier_name': {
-                'required': 'Supplier name is required. Please enter who provided this stock.',
-                'max_length': 'Supplier name is too long. Please use 100 characters or less.',
-                'invalid': 'Please enter a valid supplier name.',
+                'required': 'Supplier name is required. Please select who provided this stock.',
+                'invalid_choice': 'Invalid supplier selection. Please choose from available suppliers.',
             },
             'unit_cost': {
                 'required': 'Unit cost is required. Please enter the cost per item.',
@@ -250,9 +261,6 @@ class StockForm(forms.ModelForm):
             },
             'total_cost': {
                 'invalid': 'Please enter a valid total cost amount.',
-            },
-            'price': {
-                'invalid': 'Please enter a valid price amount (numbers only, no currency symbols).',
             },
             'origin': {
                 'required': 'Origin is required. Please select where this stock came from.',
@@ -269,7 +277,6 @@ class StockForm(forms.ModelForm):
             'supplier_name': 'Supplier Name',
             'unit_cost': 'Unit Cost (UGX)',
             'total_cost': 'Total Cost (UGX)',
-            'price': 'Unit Price (UGX)',
             'origin': 'Origin Region',
         }
         
@@ -279,10 +286,9 @@ class StockForm(forms.ModelForm):
             'product_type': 'Select whether this is a Wood or Furniture product',
             'quantity': 'Number of items to add to stock',
             'date': 'Date when the stock was received (cannot be in the future)',
-            'supplier_name': 'Name of the supplier who provided this stock',
+            'supplier_name': 'Select the supplier who provided this stock',
             'unit_cost': 'Cost per individual item in UGX',
             'total_cost': 'Automatically calculated when you enter quantity and unit cost',
-            'price': 'Selling price per unit item',
             'origin': 'Region where this stock originated from',
         }
         
@@ -315,10 +321,6 @@ class StockForm(forms.ModelForm):
                 'class': 'readonly-field',
                 'tabindex': '-1'
             }),
-            'price': forms.TextInput(attrs={
-                'title': 'Price must be greater than 0',
-                'placeholder': 'e.g., 15000'
-            }),
         }
     
     def __init__(self, *args, **kwargs):
@@ -329,7 +331,7 @@ class StockForm(forms.ModelForm):
         self.fields['date'].widget.attrs['max'] = date.today().strftime('%Y-%m-%d')
         
         # Add required attributes for client-side validation
-        required_fields = ['product_name', 'product_type', 'quantity', 'date', 'supplier_name', 'unit_cost', 'price', 'origin']
+        required_fields = ['product_name', 'product_type', 'quantity', 'date', 'supplier_name', 'unit_cost', 'origin']
         for field_name in required_fields:
             if field_name in self.fields:
                 self.fields[field_name].widget.attrs['required'] = 'required'

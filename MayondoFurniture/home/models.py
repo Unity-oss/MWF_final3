@@ -7,6 +7,43 @@ import uuid
 # ===== MAYONDO FURNITURE MANAGEMENT SYSTEM MODELS =====
 # This file defines the database structure for the furniture business
 
+class Customer(models.Model):
+    """
+    Customer Model - Stores customer information for sales tracking
+    """
+    name = models.CharField(max_length=100, unique=True, help_text="Customer full name")
+    phone = models.CharField(max_length=15, blank=True, help_text="Customer phone number")
+    email = models.EmailField(blank=True, help_text="Customer email address")
+    address = models.TextField(blank=True, help_text="Customer physical address")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['name']
+    
+    def __str__(self):
+        return self.name
+
+
+class Supplier(models.Model):
+    """
+    Supplier Model - Stores supplier information for stock management
+    """
+    name = models.CharField(max_length=100, unique=True, help_text="Supplier company name")
+    contact_person = models.CharField(max_length=100, blank=True, help_text="Primary contact person")
+    phone = models.CharField(max_length=15, blank=True, help_text="Supplier phone number")
+    email = models.EmailField(blank=True, help_text="Supplier email address")
+    address = models.TextField(blank=True, help_text="Supplier physical address")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['name']
+    
+    def __str__(self):
+        return self.name
+
+
 class Product(models.Model):
     """
     Product Model - Central product catalog for the furniture business
@@ -184,6 +221,14 @@ class Stock(models.Model):
     
     # Origin/Region choices
     ORIGIN_CHOICES = [('Western', 'Western'), ('Central', 'Central'), ('Eastern', 'Eastern')]
+    
+    # Supplier choices
+    SUPPLIER_CHOICES = [
+        ('Mbawo Timberworks', 'Mbawo Timberworks'),
+        ('Rosewood Timbers', 'Rosewood Timbers'),
+        ('Muto Timber Suppliers', 'Muto Timber Suppliers'),
+        ('Matongo WoodWorks', 'Matongo WoodWorks'),
+    ]
 
     # Product identification and basic info
     product_id = models.CharField(max_length=50, blank=True, unique=True)  # Auto-generated unique identifier
@@ -204,14 +249,13 @@ class Stock(models.Model):
     
     # Inventory management
     quantity = models.IntegerField()  # Number of items available
-    supplier_name = models.CharField(max_length=100)  # Who supplied this product
+    supplier_name = models.CharField(max_length=100, choices=SUPPLIER_CHOICES)  # Who supplied this product
     
     # Pricing information
     unit_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, 
                                    help_text="Cost per unit item in dollars")
     total_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, 
                                     help_text="Automatically calculated from quantity × unit cost")
-    price = models.CharField(help_text="Unit selling price")  # Unit selling price
     
     # Additional details
     origin = models.CharField(max_length=20, choices=ORIGIN_CHOICES)  # Where the product came from
@@ -257,18 +301,6 @@ class Stock(models.Model):
         # Auto-calculate total cost
         if self.quantity is not None and self.unit_cost is not None:
             self.total_cost = self.quantity * self.unit_cost
-        
-        # Validate price is positive (if it contains numeric values)
-        if self.price:
-            try:
-                price_value = float(self.price.replace(',', ''))  # Remove commas for validation
-                if price_value <= 0:
-                    raise ValidationError({
-                        'price': 'Price must be greater than 0. Please enter a positive amount.'
-                    })
-            except (ValueError, AttributeError):
-                # If price is not numeric, we'll allow it (for flexibility)
-                pass
 
     def save(self, *args, **kwargs):
         """

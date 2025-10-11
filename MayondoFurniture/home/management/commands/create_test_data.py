@@ -22,14 +22,43 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write(self.style.SUCCESS('Creating sample data for testing...'))
         
-        # Create or get a sample user for sales
-        user, created = User.objects.get_or_create(
-            username='test_agent',
-            defaults={'email': 'test@example.com', 'first_name': 'Test', 'last_name': 'Agent'}
-        )
-        if created:
-            user.set_password('testpassword')
-            user.save()
+        # Create sample employees for the sales agent dropdown
+        from django.contrib.auth.models import Group
+        
+        # Create Employee group if it doesn't exist
+        employee_group, created = Group.objects.get_or_create(name='Employee')
+        
+        # Create sample employees
+        employees_data = [
+            {'username': 'john_mukasa', 'first_name': 'John', 'last_name': 'Mukasa', 'email': 'john@mwf.com'},
+            {'username': 'mary_nakato', 'first_name': 'Mary', 'last_name': 'Nakato', 'email': 'mary@mwf.com'},
+            {'username': 'david_ssemakula', 'first_name': 'David', 'last_name': 'Ssemakula', 'email': 'david@mwf.com'},
+        ]
+        
+        for emp_data in employees_data:
+            employee, created = User.objects.get_or_create(
+                username=emp_data['username'],
+                defaults=emp_data
+            )
+            if created:
+                employee.set_password('password123')
+                employee.save()
+                # Add to Employee group
+                employee.groups.add(employee_group)
+                self.stdout.write(f'Created employee: {employee.first_name} {employee.last_name}')
+        
+        # Use first employee as default sales agent
+        default_agent = User.objects.filter(groups__name="Employee").first()
+        if not default_agent:
+            # Fallback: create a test agent
+            default_agent, created = User.objects.get_or_create(
+                username='test_agent',
+                defaults={'email': 'test@example.com', 'first_name': 'Test', 'last_name': 'Agent'}
+            )
+            if created:
+                default_agent.set_password('testpassword')
+                default_agent.save()
+                default_agent.groups.add(employee_group)
         
         # Create sample products if they don't exist
         products_to_create = [
@@ -54,8 +83,7 @@ class Command(BaseCommand):
                 'product_type': 'Wood',
                 'quantity': 100,
                 'unit_cost': Decimal('5000.00'),  # UGX 5,000 per piece
-                'supplier_name': 'Timber Suppliers Ltd',
-                'price': '8000',   # Selling price UGX 8,000
+                'supplier_name': 'Mbawo Timberworks',
                 'origin': 'Western',
                 'date': date.today() - timedelta(days=10)
             },
@@ -64,8 +92,7 @@ class Command(BaseCommand):
                 'product_type': 'Furniture',
                 'quantity': 20,
                 'unit_cost': Decimal('150000.00'),  # UGX 150,000 per sofa
-                'supplier_name': 'Furniture Makers Co',
-                'price': '200000',  # Selling price UGX 200,000
+                'supplier_name': 'Rosewood Timbers',
                 'origin': 'Central',
                 'date': date.today() - timedelta(days=5)
             },
@@ -74,8 +101,7 @@ class Command(BaseCommand):
                 'product_type': 'Furniture',
                 'quantity': 15,
                 'unit_cost': Decimal('80000.00'),  # UGX 80,000 per table
-                'supplier_name': 'Wood Crafters',
-                'price': '120000',  # Selling price UGX 120,000
+                'supplier_name': 'Matongo WoodWorks',
                 'origin': 'Eastern',
                 'date': date.today() - timedelta(days=3)
             }
@@ -101,7 +127,7 @@ class Command(BaseCommand):
                 'unit_price': Decimal('8000.00'),  # Same as stock price
                 'date': date.today() - timedelta(days=2),
                 'payment_type': 'Cash',
-                'sales_agent': 'test_agent',
+                'sales_agent': default_agent.username,
                 'transport_required': False
             },
             {
@@ -112,7 +138,7 @@ class Command(BaseCommand):
                 'unit_price': Decimal('200000.00'),  # Same as stock price
                 'date': date.today() - timedelta(days=1),
                 'payment_type': 'Bank Overdraft',
-                'sales_agent': 'test_agent',
+                'sales_agent': default_agent.username,
                 'transport_required': True  # This will add 5% transport fee
             },
             {
@@ -123,7 +149,7 @@ class Command(BaseCommand):
                 'unit_price': Decimal('120000.00'),  # Same as stock price
                 'date': date.today(),
                 'payment_type': 'Cheque',
-                'sales_agent': 'test_agent',
+                'sales_agent': default_agent.username,
                 'transport_required': False
             }
         ]

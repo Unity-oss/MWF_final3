@@ -416,32 +416,36 @@ def dashBoard(request):
                 # FALLBACK: Legacy string matching during migration period
                 stock_item = Stock.objects.filter(product_name__iexact=sale.product_name, product_type__iexact=sale.product_type).first()
             
-            if stock_item:
-                # Convert price from CharField to float and multiply by quantity
-                unit_price = float(stock_item.price) if stock_item.price else 0
-                sale_amount = unit_price * sale.quantity
-                
-                # Add 5% transport fee if transport is required
-                if sale.transport_required:
-                    transport_fee = sale_amount * 0.05  # 5% transport fee
-                    sale_amount += transport_fee
-                
-                total_revenue += sale_amount
-                
-                # Calculate cost of sales for profit calculation
-                # Try to get the actual cost of this product from stock records
-                if sale.product_ref:
-                    stock_cost_items = Stock.objects.filter(product_ref=sale.product_ref)
+            # Use the unit_price and total_sales_amount from the Sale model itself
+            if sale.unit_price and sale.total_sales_amount:
+                sale_amount = float(sale.total_sales_amount)
+            else:
+                # Fallback calculation if total_sales_amount is not available
+                if sale.unit_price and sale.quantity:
+                    sale_amount = float(sale.unit_price) * sale.quantity
+                    # Add 5% transport fee if transport is required
+                    if sale.transport_required:
+                        transport_fee = sale_amount * 0.05  # 5% transport fee
+                        sale_amount += transport_fee
                 else:
-                    stock_cost_items = Stock.objects.filter(product_name__iexact=sale.product_name, product_type__iexact=sale.product_type)
+                    sale_amount = 0
                 
-                # Calculate average unit cost from new model fields
-                unit_costs = []
-                for stock_cost_item in stock_cost_items:
-                    if stock_cost_item.unit_cost and stock_cost_item.unit_cost > 0:
-                        unit_costs.append(float(stock_cost_item.unit_cost))
-                
-                if unit_costs:
+            total_revenue += sale_amount
+            
+            # Calculate cost of sales for profit calculation
+            # Try to get the actual cost of this product from stock records
+            if sale.product_ref:
+                stock_cost_items = Stock.objects.filter(product_ref=sale.product_ref)
+            else:
+                stock_cost_items = Stock.objects.filter(product_name__iexact=sale.product_name, product_type__iexact=sale.product_type)
+            
+            # Calculate average unit cost from new model fields
+            unit_costs = []
+            for stock_cost_item in stock_cost_items:
+                if stock_cost_item.unit_cost and stock_cost_item.unit_cost > 0:
+                    unit_costs.append(float(stock_cost_item.unit_cost))
+            
+            if unit_costs:
                     avg_unit_cost = sum(unit_costs) / len(unit_costs)
                     sale_cost = avg_unit_cost * sale.quantity
                     total_cost_of_sales += sale_cost
@@ -465,15 +469,16 @@ def dashBoard(request):
                 # FALLBACK: For legacy records without foreign key (during migration period)
                 stock_item = Stock.objects.filter(product_name__iexact=sale.product_name, product_type__iexact=sale.product_type).first()
             
-            if stock_item:
-                unit_price = float(stock_item.price) if stock_item.price else 0
-                total_amount = unit_price * sale.quantity
+            # Use the sale's own unit_price and total_sales_amount
+            if sale.unit_price and sale.quantity:
+                total_amount = float(sale.total_sales_amount) if sale.total_sales_amount else float(sale.unit_price) * sale.quantity
                 
                 # Calculate transport fee (5% if transport required)
                 transport_fee = 0
                 if sale.transport_required:
-                    transport_fee = total_amount * 0.05
-                    total_amount += transport_fee
+                    base_amount = float(sale.unit_price) * sale.quantity
+                    transport_fee = base_amount * 0.05
+                    total_amount = base_amount + transport_fee
             else:
                 total_amount = 0
                 transport_fee = 0
