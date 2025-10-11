@@ -1,5 +1,3 @@
-{% load crispy_forms_tags %}
-
 {# Card Header with Customer Info #}
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
     <div class="flex items-center justify-between">
@@ -12,50 +10,121 @@
                 <i class="fas fa-users mr-1"></i>
                 Building Customer Database
             </p>
-            <p class="text-xs text-gray-500">All fields except name are optional</p>
+            <p class="text-xs text-gray-500">All fields are required</p>
         </div>
     </div>
 </div>
 
+{# Success and Error Messages #}
+{% if messages %}
+    {% for message in messages %}
+        <div class="mb-4 px-4 py-3 rounded-lg border-l-4 {% if message.tags == 'error' %}bg-red-50 border-red-400 text-red-700{% elif message.tags == 'success' %}bg-green-50 border-green-400 text-green-700{% else %}bg-blue-50 border-blue-400 text-blue-700{% endif %}">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    {% if message.tags == 'error' %}
+                        <i class="fas fa-exclamation-circle text-red-400"></i>
+                    {% elif message.tags == 'success' %}
+                        <i class="fas fa-check-circle text-green-400"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle text-blue-400"></i>
+                    {% endif %}
+                </div>
+                <div class="ml-3">
+                    {{ message }}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}
+
 {# Display non-field errors #}
 {% if form.non_field_errors %}
-<div class="text-red-600 mb-4">
-    {{ form.non_field_errors }}
+<div class="mb-4 bg-red-50 border border-red-200 rounded-lg p-4">
+    <div class="flex">
+        <div class="flex-shrink-0">
+            <i class="fas fa-exclamation-triangle text-red-400"></i>
+        </div>
+        <div class="ml-3">
+            <h3 class="text-sm font-medium text-red-800">Please fill in required fields</h3>
+            <div class="mt-2 text-sm text-red-700">
+                {{ form.non_field_errors }}
+            </div>
+        </div>
+    </div>
 </div>
 {% endif %}
 
-{# Customer Name (full width) #}
-<div class="form-row mb-4">
-    <div class="col-12">
-        {{ form.name|as_crispy_field }}
+{# Customer Information #}
+<div class="bg-gray-50 rounded-lg p-4 mb-6">
+    {# Customer Name (full width) #}
+    <div class="mb-4">
+        <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+            {{ form.name.label }} <span class="text-red-500">*</span>
+        </label>
+        {{ form.name }}
+        {% if form.name.help_text %}
+            <p class="mt-1 text-xs text-gray-500">{{ form.name.help_text }}</p>
+        {% endif %}
         {% if form.name.errors %}
-            <p class="text-red-600 text-sm">{{ form.name.errors }}</p>
+            <div class="mt-1">
+                {% for error in form.name.errors %}
+                    <p class="text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
+                {% endfor %}
+            </div>
         {% endif %}
     </div>
-</div>
 
-{# Phone and Email (2 columns) #}
-<div class="form-row mb-4">
-    <div class="col-md-6">
-        {{ form.phone|as_crispy_field }}
-        {% if form.phone.errors %}
-            <p class="text-red-600 text-sm">{{ form.phone.errors }}</p>
-        {% endif %}
+    {# Phone and Email (2 columns) #}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+            <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                {{ form.phone.label }} <span class="text-red-500">*</span>
+            </label>
+            {{ form.phone }}
+            {% if form.phone.help_text %}
+                <p class="mt-1 text-xs text-gray-500">{{ form.phone.help_text }}</p>
+            {% endif %}
+            {% if form.phone.errors %}
+                <div class="mt-1">
+                    {% for error in form.phone.errors %}
+                        <p class="text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div>
+            <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                {{ form.email.label }} <span class="text-red-500">*</span>
+            </label>
+            {{ form.email }}
+            {% if form.email.help_text %}
+                <p class="mt-1 text-xs text-gray-500">{{ form.email.help_text }}</p>
+            {% endif %}
+            {% if form.email.errors %}
+                <div class="mt-1">
+                    {% for error in form.email.errors %}
+                        <p class="text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
     </div>
-    <div class="col-md-6">
-        {{ form.email|as_crispy_field }}
-        {% if form.email.errors %}
-            <p class="text-red-600 text-sm">{{ form.email.errors }}</p>
-        {% endif %}
-    </div>
-</div>
 
-{# Address (full width) #}
-<div class="form-row mb-4">
-    <div class="col-12">
-        {{ form.address|as_crispy_field }}
+    {# Address (full width) #}
+    <div class="mb-4">
+        <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+            {{ form.address.label }} <span class="text-red-500">*</span>
+        </label>
+        {{ form.address }}
+        {% if form.address.help_text %}
+            <p class="mt-1 text-xs text-gray-500">{{ form.address.help_text }}</p>
+        {% endif %}
         {% if form.address.errors %}
-            <p class="text-red-600 text-sm">{{ form.address.errors }}</p>
+            <div class="mt-1">
+                {% for error in form.address.errors %}
+                    <p class="text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
+                {% endfor %}
+            </div>
         {% endif %}
     </div>
 </div>

@@ -1,15 +1,19 @@
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
+from django.contrib.auth.decorators import login_required
 from .models import Sale, Stock, Customer, Supplier
+from django.contrib.auth.models import User
 from django.db.models import Q
 
 @require_GET
+@login_required
 def search_dashboard(request):
     query = request.GET.get('q', '').strip()
     sales_results = []
     stock_results = []
     customer_results = []
     supplier_results = []
+    employee_results = []
     
     if query:
         # Search in Sales
@@ -46,6 +50,14 @@ def search_dashboard(request):
             Q(address__icontains=query)
         )
         
+        # Search in Employees (Users with Employee group)
+        employees = User.objects.filter(groups__name="Employee").filter(
+            Q(username__icontains=query) |
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(email__icontains=query)
+        )
+        
         sales_results = []
         for sale in sales:
             sale_data = {
@@ -75,10 +87,25 @@ def search_dashboard(request):
             
         customer_results = list(customers.values())
         supplier_results = list(suppliers.values())
+        
+        # Format employee results
+        for employee in employees:
+            employee_data = {
+                'id': employee.id,
+                'username': employee.username,
+                'first_name': employee.first_name,
+                'last_name': employee.last_name,
+                'email': employee.email,
+                'full_name': f"{employee.first_name} {employee.last_name}".strip() or employee.username,
+                'date_joined': employee.date_joined.strftime('%Y-%m-%d') if employee.date_joined else None,
+                'is_active': employee.is_active,
+            }
+            employee_results.append(employee_data)
     
     return JsonResponse({
         'sales': sales_results,
         'stock': stock_results,
         'customers': customer_results,
-        'suppliers': supplier_results
+        'suppliers': supplier_results,
+        'employees': employee_results
     })

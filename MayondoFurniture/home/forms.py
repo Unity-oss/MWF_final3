@@ -405,7 +405,7 @@ class LoginForm(forms.Form):
     
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={
-            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-cordes-dark focus:border-transparent outline-none transition duration-150 ease-in-out text-lg',
+            'class': 'w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 focus:ring-2 focus:ring-cordes-dark focus:border-transparent outline-none transition duration-150 ease-in-out text-lg',
             'placeholder': 'Enter your password',
             'autocomplete': 'current-password'
         }),
@@ -432,6 +432,90 @@ class LoginForm(forms.Form):
     )
 
 
+class EmployeeForm(forms.Form):
+    """
+    Employee Form - Creates new employee accounts
+    """
+    username = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Enter username',
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+        }),
+        error_messages={
+            'required': 'Username is required.',
+            'max_length': 'Username cannot exceed 150 characters.'
+        },
+        help_text='Must be unique. Letters, numbers, and @/./+/-/_ only.'
+    )
+    
+    first_name = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Enter first name',
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+        }),
+        error_messages={
+            'required': 'First name is required.',
+            'max_length': 'First name cannot exceed 150 characters.'
+        }
+    )
+    
+    last_name = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Enter last name',
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+        }),
+        error_messages={
+            'required': 'Last name is required.',
+            'max_length': 'Last name cannot exceed 150 characters.'
+        }
+    )
+    
+    email = forms.EmailField(
+        required=False,
+        widget=forms.EmailInput(attrs={
+            'placeholder': 'Enter email address (optional)',
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+        }),
+        error_messages={
+            'invalid': 'Please enter a valid email address.'
+        }
+    )
+    
+    password = forms.CharField(
+        min_length=8,
+        widget=forms.PasswordInput(attrs={
+            'placeholder': 'Enter password',
+            'class': 'w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+        }),
+        error_messages={
+            'required': 'Password is required.',
+            'min_length': 'Password must be at least 8 characters long.'
+        },
+        help_text='Must be at least 8 characters long.'
+    )
+    
+    def clean_username(self):
+        username = self.cleaned_data['username']
+        from django.contrib.auth.models import User
+        
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError('A user with this username already exists.')
+        
+        return username
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if email:
+            from django.contrib.auth.models import User
+            if User.objects.filter(email=email).exists():
+                raise forms.ValidationError('A user with this email already exists.')
+        
+        return email
+
+
 class CustomerForm(forms.ModelForm):
     """
     Customer Form - Creates and edits customer records
@@ -447,10 +531,15 @@ class CustomerForm(forms.ModelForm):
                 'max_length': 'Customer name is too long. Please use 100 characters or less.',
             },
             'phone': {
+                'required': 'Phone number is required.',
                 'max_length': 'Phone number is too long. Please use 15 characters or less.',
             },
             'email': {
+                'required': 'Email address is required.',
                 'invalid': 'Please enter a valid email address.',
+            },
+            'address': {
+                'required': 'Physical address is required.',
             },
         }
         
@@ -463,40 +552,43 @@ class CustomerForm(forms.ModelForm):
         
         help_texts = {
             'name': 'Enter the customer\'s full name',
-            'phone': 'Customer\'s contact phone number (optional)',
-            'email': 'Customer\'s email address (optional)',
-            'address': 'Customer\'s physical address (optional)',
+            'phone': 'Customer\'s contact phone number',
+            'email': 'Customer\'s email address',
+            'address': 'Customer\'s physical address',
         }
         
         widgets = {
             'name': forms.TextInput(attrs={
                 'placeholder': 'e.g., John Mukasa',
-                'class': 'form-control'
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
             }),
             'phone': forms.TextInput(attrs={
                 'placeholder': 'e.g., +256 700 123 456',
-                'class': 'form-control'
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
             }),
             'email': forms.EmailInput(attrs={
                 'placeholder': 'e.g., john@example.com',
-                'class': 'form-control'
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
             }),
             'address': forms.Textarea(attrs={
                 'rows': 3,
                 'placeholder': 'e.g., Plot 123, Kampala Road, Kampala',
-                'class': 'form-control'
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
             }),
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Add required attribute for name field
-        self.fields['name'].widget.attrs['required'] = 'required'
-        
         # Setup crispy forms
         self.helper = FormHelper()
         self.helper.form_method = 'post'
+    
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if phone and len(phone.strip()) < 10:
+            raise forms.ValidationError('Please enter a valid phone number with at least 10 digits.')
+        return phone
 
 
 class SupplierForm(forms.ModelForm):
@@ -509,18 +601,24 @@ class SupplierForm(forms.ModelForm):
         
         error_messages = {
             'name': {
-                'required': 'Supplier name is required.',
+                'required': 'Supplier company name is required.',
                 'unique': 'A supplier with this name already exists.',
                 'max_length': 'Supplier name is too long. Please use 100 characters or less.',
             },
             'contact_person': {
+                'required': 'Contact person name is required.',
                 'max_length': 'Contact person name is too long. Please use 100 characters or less.',
             },
             'phone': {
+                'required': 'Phone number is required.',
                 'max_length': 'Phone number is too long. Please use 15 characters or less.',
             },
             'email': {
+                'required': 'Email address is required.',
                 'invalid': 'Please enter a valid email address.',
+            },
+            'address': {
+                'required': 'Physical address is required.',
             },
         }
         
@@ -543,34 +641,37 @@ class SupplierForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={
                 'placeholder': 'e.g., Mbawo Timberworks',
-                'class': 'form-control'
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
             }),
             'contact_person': forms.TextInput(attrs={
                 'placeholder': 'e.g., David Mbawo',
-                'class': 'form-control'
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
             }),
             'phone': forms.TextInput(attrs={
                 'placeholder': 'e.g., +256 700 123 456',
-                'class': 'form-control'
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
             }),
             'email': forms.EmailInput(attrs={
                 'placeholder': 'e.g., info@mbawo.com',
-                'class': 'form-control'
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
             }),
             'address': forms.Textarea(attrs={
                 'rows': 3,
                 'placeholder': 'e.g., Industrial Area, Kampala',
-                'class': 'form-control'
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
             }),
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Add required attribute for name field
-        self.fields['name'].widget.attrs['required'] = 'required'
-        
         # Setup crispy forms
         self.helper = FormHelper()
         self.helper.form_method = 'post'
+    
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if phone and len(phone.strip()) < 10:
+            raise forms.ValidationError('Please enter a valid phone number with at least 10 digits.')
+        return phone
 

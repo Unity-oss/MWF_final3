@@ -8,7 +8,7 @@
     <h1 class="text-3xl text-gray-800">Add New Employee</h1>
   </header>
 
-  <form method="post" action="{% url 'addEmployee' %}" class="employee-form">
+  <form method="post" action="{% url 'addEmployee' %}" class="employee-form" novalidate>
     {% csrf_token %}
     {% include 'forms/employee_form.html' %}
   </form>
@@ -16,61 +16,27 @@
 
 <!-- Employee Form JavaScript -->
 <script>
-  // Employee form validation and enhancement
+  // Employee form enhancement (without validation to allow Django errors to show)
   document.addEventListener('DOMContentLoaded', function() {
     
-    // Password confirmation validation
-    const password = document.getElementById('password');
-    const confirmPassword = document.getElementById('confirm_password');
-    
-    if (password && confirmPassword) {
-      function validatePasswordMatch() {
-        if (confirmPassword.value !== password.value) {
-          confirmPassword.setCustomValidity('Passwords do not match');
-        } else {
-          confirmPassword.setCustomValidity('');
-        }
-      }
-      
-      password.addEventListener('input', validatePasswordMatch);
-      confirmPassword.addEventListener('input', validatePasswordMatch);
-    }
-    
-    // Username validation
+    // Username formatting (allow only valid username characters)
     const username = document.getElementById('username');
     if (username) {
       username.addEventListener('input', function() {
-        // Remove spaces and special characters for username
-        this.value = this.value.replace(/[^a-zA-Z0-9._]/g, '');
+        // Remove spaces and invalid characters for username
+        this.value = this.value.replace(/[^a-zA-Z0-9._@+-]/g, '');
       });
     }
     
-    // Form validation styling
+    // Remove any HTML5 validation attributes that might have been added
     const form = document.querySelector('.employee-form');
     if (form) {
-      form.addEventListener('submit', function(event) {
-        const inputs = form.querySelectorAll('input[required]');
-        let isValid = true;
-        
-        inputs.forEach(input => {
-          if (!input.value.trim()) {
-            input.classList.add('border-red-500');
-            isValid = false;
-          } else {
-            input.classList.remove('border-red-500');
-            input.classList.add('border-green-500');
-          }
-        });
-        
-        if (!isValid) {
-          event.preventDefault();
-          // Scroll to first error
-          const firstError = form.querySelector('.border-red-500');
-          if (firstError) {
-            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            firstError.focus();
-          }
-        }
+      const inputs = form.querySelectorAll('input');
+      inputs.forEach(input => {
+        input.removeAttribute('required');
+        input.removeAttribute('pattern');
+        input.removeAttribute('minlength');
+        input.removeAttribute('maxlength');
       });
     }
   });

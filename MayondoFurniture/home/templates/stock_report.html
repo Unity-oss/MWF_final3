@@ -167,8 +167,8 @@
           <td class="p-3 border-b border-gray-200">{{ stock.quantity }}</td>
           <td class="p-3 border-b border-gray-200">{{ stock.date|date:"d/m/Y" }}</td>
           <td class="p-3 border-b border-gray-200">{{ stock.supplier.name|default:"N/A" }}</td>
-          <td class="p-3 border-b border-gray-200">{{ stock.unit_cost }}</td>
-          <td class="p-3 border-b border-gray-200">{{ stock.total_cost }}</td>
+          <td class="p-3 border-b border-gray-200">UGX {{ stock.unit_cost }}</td>
+          <td class="p-3 border-b border-gray-200">UGX {{ stock.total_cost }}</td>
           <td class="p-3 border-b border-gray-200">
             <span class="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
               {{ stock.origin }}

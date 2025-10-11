@@ -1142,7 +1142,7 @@ searchInput.addEventListener('input', function() {
           searchInput.parentElement.appendChild(resultsDiv);
         }
         let html = '';
-        if (data.sales.length === 0 && data.stock.length === 0 && data.customers.length === 0 && data.suppliers.length === 0) {
+        if (data.sales.length === 0 && data.stock.length === 0 && data.customers.length === 0 && data.suppliers.length === 0 && (!data.employees || data.employees.length === 0)) {
           html = '<div class="p-4 text-gray-500">No results found.</div>';
         } else {
           if (data.sales.length > 0) {
@@ -1183,6 +1183,19 @@ searchInput.addEventListener('input', function() {
                         <span class='text-xs text-gray-500'>
                           ${supplier.contact_person ? 'Contact: ' + supplier.contact_person : ''}
                           ${supplier.phone ? (supplier.contact_person ? ' • ' : '') + 'Phone: ' + supplier.phone : ''}
+                        </span>
+                      </div>`;
+            });
+          }
+          if (data.employees && data.employees.length > 0) {
+            html += '<div class="p-2 font-bold text-cordes-blue">Employees</div>';
+            data.employees.forEach(employee => {
+              html += `<div class='p-2 border-b hover:bg-gray-50 cursor-pointer' onclick="window.location.href='/viewEmployee/${employee.id}/'">
+                        <span class='font-semibold'>${employee.full_name}</span><br>
+                        <span class='text-xs text-gray-500'>
+                          Username: ${employee.username}
+                          ${employee.email ? ' • Email: ' + employee.email : ''}
+                          ${employee.is_active ? ' • <span class="text-green-600">Active</span>' : ' • <span class="text-red-600">Inactive</span>'}
                         </span>
                       </div>`;
             });

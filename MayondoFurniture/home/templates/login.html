@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MWF-Mayondo Wood & Furniture Workshop</title>
     <link rel="icon" type="image/png" href="{% static 'logo2.png' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -20,6 +21,31 @@
         },
       };
     </script>
+    <style>
+      /* Ensure password toggle button is visible and clickable */
+      #togglePassword {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        z-index: 10;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      #togglePassword:hover i {
+        color: #4B5563;
+      }
+      
+      #passwordIcon {
+        font-size: 18px;
+        pointer-events: none;
+      }
+    </style>
   </head>
   <body class="min-h-screen flex flex-col">
     <header class="py-3">
@@ -121,22 +147,34 @@
 
                       <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-2" for="{% if form %}{{ form.password.id_for_label }}{% else %}password{% endif %}">Password</label>
-                        {% if form %}
-                          {{ form.password }}
-                          {% if form.password.errors %}
-                            {% for error in form.password.errors %}
-                              <p class="mt-1 text-sm text-red-600">{{ error }}</p>
-                            {% endfor %}
+                        <div class="relative">
+                          {% if form %}
+                            {{ form.password }}
+                          {% else %}
+                            <input
+                              type="password"
+                              id="password"
+                              name="password"
+                              class="w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 focus:ring-2 focus:ring-cordes-dark focus:border-transparent outline-none transition duration-150 ease-in-out text-lg"
+                              autocomplete="current-password"
+                              placeholder="Enter your password"
+                            />
                           {% endif %}
-                        {% else %}
-                          <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-cordes-dark focus:border-transparent outline-none transition duration-150 ease-in-out text-lg"
-                            autocomplete="current-password"
-                            placeholder="Enter your password"
-                          />
+                          <!-- Password Toggle Button (works for both Django form and fallback) -->
+                          <button
+                            type="button"
+                            id="togglePassword"
+                            class="absolute inset-y-0 right-0 flex items-center justify-center px-3 text-gray-400 hover:text-gray-600 focus:outline-none z-10"
+                            onclick="togglePasswordVisibility()"
+                            style="height: 100%; cursor: pointer;"
+                          >
+                            <i id="passwordIcon" class="fas fa-eye text-lg"></i>
+                          </button>
+                        </div>
+                        {% if form and form.password.errors %}
+                          {% for error in form.password.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                          {% endfor %}
                         {% endif %}
                       </div>
 
@@ -290,6 +328,48 @@
             }
           });
         });
+      });
+      
+      // Password Toggle Function
+      function togglePasswordVisibility() {
+        console.log('Toggle password visibility clicked');
+        
+        // Try to find the password field - Django form uses id_password, fallback uses password
+        const passwordField = document.getElementById('id_password') || 
+                             document.getElementById('password') || 
+                             document.querySelector('input[name="password"]') ||
+                             document.querySelector('input[type="password"]');
+        
+        const passwordIcon = document.getElementById('passwordIcon');
+        
+        console.log('Password field found:', passwordField);
+        console.log('Password icon found:', passwordIcon);
+        
+        if (passwordField && passwordIcon) {
+          console.log('Current field type:', passwordField.type);
+          
+          if (passwordField.type === 'password') {
+            passwordField.type = 'text';
+            passwordIcon.classList.remove('fa-eye');
+            passwordIcon.classList.add('fa-eye-slash');
+            console.log('Changed to text (show password)');
+          } else {
+            passwordField.type = 'password';
+            passwordIcon.classList.remove('fa-eye-slash');
+            passwordIcon.classList.add('fa-eye');
+            console.log('Changed to password (hide password)');
+          }
+        } else {
+          console.error('Password field or icon not found');
+        }
+      }
+      
+      // Also add on page load to make sure button is visible
+      document.addEventListener('DOMContentLoaded', function() {
+        const toggleButton = document.getElementById('togglePassword');
+        const passwordIcon = document.getElementById('passwordIcon');
+        console.log('Page loaded - Toggle button:', toggleButton);
+        console.log('Page loaded - Password icon:', passwordIcon);
       });
     </script>
   </body>

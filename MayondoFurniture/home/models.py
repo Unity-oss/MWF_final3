@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from datetime import datetime, date
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 import uuid
 
 # ===== MAYONDO FURNITURE MANAGEMENT SYSTEM MODELS =====
@@ -13,9 +13,9 @@ class Customer(models.Model):
     Customer Model - Stores customer information for sales tracking
     """
     name = models.CharField(max_length=100, unique=True, help_text="Customer full name")
-    phone = models.CharField(max_length=15, blank=True, help_text="Customer phone number")
-    email = models.EmailField(blank=True, help_text="Customer email address")
-    address = models.TextField(blank=True, help_text="Customer physical address")
+    phone = models.CharField(max_length=15, help_text="Customer phone number")
+    email = models.EmailField(help_text="Customer email address")
+    address = models.TextField(help_text="Customer physical address")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -31,10 +31,10 @@ class Supplier(models.Model):
     Supplier Model - Stores supplier information for stock management
     """
     name = models.CharField(max_length=100, unique=True, help_text="Supplier company name")
-    contact_person = models.CharField(max_length=100, blank=True, help_text="Primary contact person")
-    phone = models.CharField(max_length=15, blank=True, help_text="Supplier phone number")
-    email = models.EmailField(blank=True, help_text="Supplier email address")
-    address = models.TextField(blank=True, help_text="Supplier physical address")
+    contact_person = models.CharField(max_length=100, help_text="Primary contact person")
+    phone = models.CharField(max_length=15, help_text="Supplier phone number")
+    email = models.EmailField(help_text="Supplier email address")
+    address = models.TextField(help_text="Supplier physical address")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -114,7 +114,7 @@ class Sale(models.Model):
     date = models.DateField(null=False)  # When the sale occurred
     
     # Pricing information
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Price per unit in dollars")
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Price per unit in UGX")
     total_sales_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, help_text="Automatically calculated from quantity × unit price")
     
     # Payment and logistics
@@ -155,9 +155,9 @@ class Sale(models.Model):
             # Add 5% transport fee if transport is required
             if self.transport_required:
                 transport_fee = base_amount * Decimal('0.05')
-                self.total_sales_amount = base_amount + transport_fee
+                self.total_sales_amount = (base_amount + transport_fee).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
             else:
-                self.total_sales_amount = base_amount
+                self.total_sales_amount = base_amount.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         
         # Validate product details if provided (they have defaults, so this is optional validation)
         if self.product_name and self.product_name not in [choice[0] for choice in self.CUSTOMER_CHOICES]:
@@ -295,7 +295,7 @@ class Stock(models.Model):
     
     # Pricing information
     unit_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, 
-                                   help_text="Cost per unit item in dollars")
+                                   help_text="Cost per unit item in UGX")
     total_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, 
                                     help_text="Automatically calculated from quantity × unit cost")
     

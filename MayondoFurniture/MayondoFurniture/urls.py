@@ -28,7 +28,8 @@ from home.views import (
     sales_report, stock_report, viewSingleStock, editStock, 
     deleteStock, mark_notification_read, mark_all_notifications_read, generateReceipt,
     stock_data_api, customerList, addCustomer, viewCustomer, editCustomer, deleteCustomer,
-    supplierList, addSupplier, viewSupplier, editSupplier, deleteSupplier, editEmployee, viewEmployee, deleteEmployee
+    supplierList, addSupplier, viewSupplier, editSupplier, deleteSupplier, editEmployee, viewEmployee, deleteEmployee,
+    get_stock_price
 )
 from home.search import search_dashboard
 
@@ -86,6 +87,7 @@ urlpatterns = [
     
     # ===== API ENDPOINTS =====
     path('api/stock-data/', stock_data_api, name='stock_data_api'),   # Stock data JSON API
+    path('api/stock-price/', get_stock_price, name='get_stock_price'), # Get stock unit cost for product
     
     # ===== SEARCH FUNCTIONALITY =====
     path('search_dashboard/', search_dashboard, name='search_dashboard'), # Dashboard search

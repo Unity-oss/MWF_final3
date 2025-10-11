@@ -37,7 +37,7 @@ from datetime import datetime
 
 # Local application imports
 from home.models import Sale, Stock, Notification, Customer, Supplier
-from .forms import SaleForm, StockForm, LoginForm, CustomerForm, SupplierForm
+from .forms import SaleForm, StockForm, LoginForm, CustomerForm, SupplierForm, EmployeeForm
 
 # ===== SECURITY DECORATORS =====
 # Decorator to restrict access to managers only
@@ -775,7 +775,7 @@ def generateReceipt(request, product_id):
             stock_item = Stock.objects.filter(product_name__iexact=sale.product_name, product_type__iexact=sale.product_type).first()
         
         if stock_item:
-            unit_price = float(stock_item.price) if stock_item.price else 0
+            unit_price = float(stock_item.unit_cost) if stock_item.unit_cost else 0
             subtotal = unit_price * sale.quantity
             
             # Calculate transport fee (5% if required)
@@ -950,7 +950,7 @@ def addSale(request):
             return redirect('saleRecord')
         else:
             print(f"DEBUG: Form is NOT valid. Errors: {form.errors}")
-            messages.error(request, f"Please correct the following errors: {form.errors}")
+            messages.error(request, "Please fill in required fields")
     else:
         form = SaleForm()
     
@@ -965,6 +965,45 @@ def addSale(request):
         'data': {'available_products': available_products}
     })
 
+
+@login_required
+def get_stock_price(request):
+    """
+    API endpoint to get the unit cost from stock for a specific product
+    Returns JSON with the unit cost that the product was bought at
+    """
+    if request.method == 'GET':
+        product_name = request.GET.get('product_name')
+        product_type = request.GET.get('product_type')
+        
+        if not product_name or not product_type:
+            return JsonResponse({'error': 'Product name and type are required'}, status=400)
+        
+        try:
+            # Get the most recent stock entry for this product combination
+            stock_item = Stock.objects.filter(
+                product_name=product_name,
+                product_type=product_type,
+                quantity__gt=0  # Only items with available stock
+            ).order_by('-date').first()  # Most recent entry
+            
+            if stock_item:
+                return JsonResponse({
+                    'success': True,
+                    'unit_cost': float(stock_item.unit_cost),
+                    'supplier': stock_item.supplier.name if stock_item.supplier else 'Unknown',
+                    'date_added': stock_item.date.strftime('%Y-%m-%d'),
+                    'available_quantity': stock_item.quantity
+                })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Product not found in stock or no available quantity'
+                })
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Only GET requests allowed'}, status=405)
 
 
 @login_required
@@ -1195,7 +1234,7 @@ def addCustomer(request):
             messages.success(request, f'Customer "{customer.name}" added successfully!')
             return redirect('customerList')
         else:
-            messages.error(request, 'Please correct the errors below.')
+            messages.error(request, 'Please fill in required fields')
     else:
         form = CustomerForm()
     
@@ -1218,7 +1257,7 @@ def editCustomer(request, customer_id):
             messages.success(request, f'Customer "{customer.name}" updated successfully!')
             return redirect('customerList')
         else:
-            messages.error(request, 'Please correct the errors below.')
+            messages.error(request, 'Please fill in required fields')
     else:
         form = CustomerForm(instance=customer)
     
@@ -1286,7 +1325,7 @@ def addSupplier(request):
             messages.success(request, f'Supplier "{supplier.name}" added successfully!')
             return redirect('supplierList')
         else:
-            messages.error(request, 'Please correct the errors below.')
+            messages.error(request, 'Please fill in required fields')
     else:
         form = SupplierForm()
     
@@ -1309,7 +1348,7 @@ def editSupplier(request, supplier_id):
             messages.success(request, f'Supplier "{supplier.name}" updated successfully!')
             return redirect('supplierList')
         else:
-            messages.error(request, 'Please correct the errors below.')
+            messages.error(request, 'Please fill in required fields')
     else:
         form = SupplierForm(instance=supplier)
     
@@ -1346,46 +1385,47 @@ def deleteSupplier(request, supplier_id):
 def addEmployee(request):
     """Add new employee - accessible by managers only"""
     if request.method == 'POST':
-        username = request.POST.get('username')
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        
-        # Create user
-        try:
-            user = User.objects.create_user(
-                username=username,
-                first_name=first_name,
-                last_name=last_name,
-                email=email,
-                password=password
-            )
-            
-            # Add to Employee group
-            from django.contrib.auth.models import Group
-            employee_group, created = Group.objects.get_or_create(name='Employee')
-            user.groups.add(employee_group)
-            
-            # Create notification for all managers (including the current one who added the employee)
+        form = EmployeeForm(request.POST)
+        if form.is_valid():
             try:
-                managers = User.objects.filter(groups__name="Manager")
-                for manager in managers:
-                    Notification.objects.create(
-                        user=manager,
-                        message=f"👤 NEW EMPLOYEE: {first_name} {last_name} ({username}) has been added by {request.user.get_full_name() or request.user.username}",
-                        activity_type="success"
-                    )
+                # Create user with validated data
+                user = User.objects.create_user(
+                    username=form.cleaned_data['username'],
+                    first_name=form.cleaned_data['first_name'],
+                    last_name=form.cleaned_data['last_name'],
+                    email=form.cleaned_data['email'],
+                    password=form.cleaned_data['password']
+                )
+                
+                # Add to Employee group
+                from django.contrib.auth.models import Group
+                employee_group, created = Group.objects.get_or_create(name='Employee')
+                user.groups.add(employee_group)
+                
+                # Create notification for all managers
+                try:
+                    managers = User.objects.filter(groups__name="Manager")
+                    for manager in managers:
+                        Notification.objects.create(
+                            user=manager,
+                            message=f"👤 NEW EMPLOYEE: {user.first_name} {user.last_name} ({user.username}) has been added by {request.user.get_full_name() or request.user.username}",
+                            activity_type="success"
+                        )
+                except Exception as e:
+                    # Fail silently to avoid breaking the employee creation
+                    print(f"Error creating employee notification: {e}")
+                
+                messages.success(request, f'Employee "{user.first_name} {user.last_name}" added successfully!')
+                return redirect('employee_list')
             except Exception as e:
-                # Fail silently to avoid breaking the employee creation
-                print(f"Error creating employee notification: {e}")
-            
-            messages.success(request, f'Employee "{first_name} {last_name}" added successfully!')
-            return redirect('employee_list')
-        except Exception as e:
-            messages.error(request, f'Error creating employee: {str(e)}')
+                messages.error(request, f'Error creating employee: {str(e)}')
+        else:
+            messages.error(request, 'Please fill in required fields')
+    else:
+        form = EmployeeForm()
     
     context = {
+        'form': form,
         'is_manager': True,
         'is_employee': False,
     }

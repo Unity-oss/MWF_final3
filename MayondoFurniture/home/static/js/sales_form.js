@@ -58,6 +58,9 @@ class SalesFormManager {
             // Initial validation
             this.updateQuantityLimits();
             
+            // Initial stock price check
+            this.updateStockPrice();
+            
             console.log(' Sales Form Manager initialized successfully');
         } catch (error) {
             console.error(' Error initializing Sales Form Manager:', error);
@@ -123,11 +126,17 @@ class SalesFormManager {
 
         // Product selection changes
         if (productName) {
-            productName.addEventListener('change', () => this.updateQuantityLimits());
+            productName.addEventListener('change', () => {
+                this.updateQuantityLimits();
+                this.updateStockPrice();
+            });
         }
 
         if (productType) {
-            productType.addEventListener('change', () => this.updateQuantityLimits());
+            productType.addEventListener('change', () => {
+                this.updateQuantityLimits();
+                this.updateStockPrice();
+            });
         }
 
         // Quantity input validation and calculation
@@ -246,6 +255,78 @@ class SalesFormManager {
         quantity.removeAttribute('max');
         quantity.removeAttribute('title');
         this.clearHelpText();
+    }
+
+    /**
+     * Update unit price field with stock cost information
+     * Shows the unit cost from stock when a product is selected
+     */
+    async updateStockPrice() {
+        const { productName, productType, unitPrice } = this.formElements;
+        
+        const selectedProduct = productName?.value;
+        const selectedType = productType?.value;
+        
+        if (!selectedProduct || !selectedType) {
+            this.clearStockPriceInfo();
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/stock-price/?product_name=${encodeURIComponent(selectedProduct)}&product_type=${encodeURIComponent(selectedType)}`);
+            const data = await response.json();
+
+            if (data.success) {
+                this.showStockPriceInfo(data.unit_cost, data.supplier);
+            } else {
+                this.clearStockPriceInfo();
+            }
+        } catch (error) {
+            console.error('Error fetching stock price:', error);
+            this.clearStockPriceInfo();
+        }
+    }
+
+    /**
+     * Display stock price information in the unit price field
+     */
+    showStockPriceInfo(unitCost, supplier) {
+        const { unitPrice } = this.formElements;
+        const container = unitPrice.parentElement;
+        
+        // Remove any existing stock price info
+        this.clearStockPriceInfo();
+        
+        // Create stock price info element
+        const priceInfo = document.createElement('small');
+        priceInfo.className = 'stock-price-info text-muted mt-1 d-block';
+        priceInfo.innerHTML = `<i class="fas fa-info-circle mr-1"></i><strong>Bought at:</strong> UGX ${unitCost.toFixed(2)} from ${supplier}`;
+        
+        // Add it after the input field
+        container.appendChild(priceInfo);
+        
+        // Update the field label to include the stock price reference
+        const label = container.querySelector('label');
+        if (label && !label.textContent.includes('(Bought at:')) {
+            label.innerHTML = label.innerHTML.replace('Unit Price', `Unit Price <span class="text-muted">(Bought at: UGX ${unitCost.toFixed(2)})</span>`);
+        }
+    }
+
+    /**
+     * Clear stock price information from unit price field
+     */
+    clearStockPriceInfo() {
+        // Remove stock price info elements
+        const existingInfo = document.querySelectorAll('.stock-price-info');
+        existingInfo.forEach(element => element.remove());
+        
+        // Reset the label text
+        const labels = document.querySelectorAll('label');
+        labels.forEach(label => {
+            if (label.innerHTML.includes('(Bought at:')) {
+                label.innerHTML = label.innerHTML.replace(/<span class="text-muted">.*?<\/span>/, '').replace('Unit Price', 'Unit Price');
+            }
+        });
     }
 
     /**

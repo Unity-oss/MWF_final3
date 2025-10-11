@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
 
 {% block title %}Add Customer - MWF{% endblock %}
 
@@ -9,9 +8,25 @@
     <h1 class="text-3xl text-gray-800">Add New Customer</h1>
   </header>
 
-  <form method="post" action="{% url 'addCustomer' %}" class="crispy-form">
+  <form method="post" action="{% url 'addCustomer' %}" novalidate>
     {% csrf_token %}
     {% include 'forms/customer_form.html' %}
   </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Remove any HTML5 validation attributes
+    const form = document.querySelector('form');
+    if (form) {
+        const inputs = form.querySelectorAll('input, textarea, select');
+        inputs.forEach(input => {
+            input.removeAttribute('required');
+            input.removeAttribute('pattern');
+            input.removeAttribute('minlength');
+            input.removeAttribute('maxlength');
+        });
+    }
+});
+</script>
 {% endblock %}
