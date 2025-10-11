@@ -25,7 +25,7 @@ Forms included:
 from django import forms   # Django’s form system
 
 # Local imports
-from .models import Sale, Stock, Product   # Import the database models
+from .models import Sale, Stock, Product, Customer, Supplier   # Import the database models
 
 # Crispy forms imports - minimal setup for template-based forms
 from crispy_forms.helper import FormHelper   # Basic form helper
@@ -390,4 +390,145 @@ class LoginForm(forms.Form):
     )
 
 
+class CustomerForm(forms.ModelForm):
+    """
+    Customer Form - Creates and edits customer records
+    """
+    class Meta:
+        model = Customer
+        fields = ['name', 'phone', 'email', 'address']
+        
+        error_messages = {
+            'name': {
+                'required': 'Customer name is required.',
+                'unique': 'A customer with this name already exists.',
+                'max_length': 'Customer name is too long. Please use 100 characters or less.',
+            },
+            'phone': {
+                'max_length': 'Phone number is too long. Please use 15 characters or less.',
+            },
+            'email': {
+                'invalid': 'Please enter a valid email address.',
+            },
+        }
+        
+        labels = {
+            'name': 'Customer Name',
+            'phone': 'Phone Number',
+            'email': 'Email Address',
+            'address': 'Physical Address',
+        }
+        
+        help_texts = {
+            'name': 'Enter the customer\'s full name',
+            'phone': 'Customer\'s contact phone number (optional)',
+            'email': 'Customer\'s email address (optional)',
+            'address': 'Customer\'s physical address (optional)',
+        }
+        
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'placeholder': 'e.g., John Mukasa',
+                'class': 'form-control'
+            }),
+            'phone': forms.TextInput(attrs={
+                'placeholder': 'e.g., +256 700 123 456',
+                'class': 'form-control'
+            }),
+            'email': forms.EmailInput(attrs={
+                'placeholder': 'e.g., john@example.com',
+                'class': 'form-control'
+            }),
+            'address': forms.Textarea(attrs={
+                'rows': 3,
+                'placeholder': 'e.g., Plot 123, Kampala Road, Kampala',
+                'class': 'form-control'
+            }),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Add required attribute for name field
+        self.fields['name'].widget.attrs['required'] = 'required'
+        
+        # Setup crispy forms
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+
+
+class SupplierForm(forms.ModelForm):
+    """
+    Supplier Form - Creates and edits supplier records
+    """
+    class Meta:
+        model = Supplier
+        fields = ['name', 'contact_person', 'phone', 'email', 'address']
+        
+        error_messages = {
+            'name': {
+                'required': 'Supplier name is required.',
+                'unique': 'A supplier with this name already exists.',
+                'max_length': 'Supplier name is too long. Please use 100 characters or less.',
+            },
+            'contact_person': {
+                'max_length': 'Contact person name is too long. Please use 100 characters or less.',
+            },
+            'phone': {
+                'max_length': 'Phone number is too long. Please use 15 characters or less.',
+            },
+            'email': {
+                'invalid': 'Please enter a valid email address.',
+            },
+        }
+        
+        labels = {
+            'name': 'Supplier Company Name',
+            'contact_person': 'Contact Person',
+            'phone': 'Phone Number',
+            'email': 'Email Address',
+            'address': 'Physical Address',
+        }
+        
+        help_texts = {
+            'name': 'Enter the supplier company name',
+            'contact_person': 'Primary contact person at the supplier',
+            'phone': 'Supplier\'s contact phone number',
+            'email': 'Supplier\'s email address',
+            'address': 'Supplier\'s physical address',
+        }
+        
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'placeholder': 'e.g., Mbawo Timberworks',
+                'class': 'form-control'
+            }),
+            'contact_person': forms.TextInput(attrs={
+                'placeholder': 'e.g., David Mbawo',
+                'class': 'form-control'
+            }),
+            'phone': forms.TextInput(attrs={
+                'placeholder': 'e.g., +256 700 123 456',
+                'class': 'form-control'
+            }),
+            'email': forms.EmailInput(attrs={
+                'placeholder': 'e.g., info@mbawo.com',
+                'class': 'form-control'
+            }),
+            'address': forms.Textarea(attrs={
+                'rows': 3,
+                'placeholder': 'e.g., Industrial Area, Kampala',
+                'class': 'form-control'
+            }),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Add required attribute for name field
+        self.fields['name'].widget.attrs['required'] = 'required'
+        
+        # Setup crispy forms
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
 

@@ -25,10 +25,11 @@ from django.urls import path
 from home.views import (
     landingPage, loginPage, logoutPage, dashBoard, addSale, saleRecord, 
     viewSingleSale, editSale, updateSale, deleteSale, saleReport, stockRecord, 
-    stockReport, report, addStock, addEmployee,employee_list, activityFeed, notifications, 
+    stockReport, report, addStock, addEmployee, employee_list, activityFeed, notifications, 
     sales_report, stock_report, viewSingleStock, editStock, updateStock, 
     deleteStock, mark_notification_read, mark_all_notifications_read, generateReceipt,
-    stock_data_api
+    stock_data_api, customerList, addCustomer, viewCustomer, editCustomer, deleteCustomer,
+    supplierList, addSupplier, viewSupplier, editSupplier, deleteSupplier, editEmployee, deleteEmployee
 )
 from home.search import search_dashboard
 
@@ -45,6 +46,22 @@ urlpatterns = [
     # ===== USER MANAGEMENT =====
     path('addEmployee/', addEmployee, name='addEmployee'),      # Add new users (managers only)
     path('employee_list/', employee_list, name='employee_list'), # view all employees
+    path('editEmployee/<int:employee_id>/', editEmployee, name='editEmployee'),     # Edit employee
+    path('deleteEmployee/<int:employee_id>/', deleteEmployee, name='deleteEmployee'), # Delete employee
+    
+    # ===== CUSTOMER MANAGEMENT =====
+    path('customerList/', customerList, name='customerList'),   # View all customers
+    path('addCustomer/', addCustomer, name='addCustomer'),      # Add new customer
+    path('viewCustomer/<int:customer_id>/', viewCustomer, name='viewCustomer'),     # View customer details
+    path('editCustomer/<int:customer_id>/', editCustomer, name='editCustomer'),     # Edit customer
+    path('deleteCustomer/<int:customer_id>/', deleteCustomer, name='deleteCustomer'), # Delete customer
+    
+    # ===== SUPPLIER MANAGEMENT =====
+    path('supplierList/', supplierList, name='supplierList'),  # View all suppliers
+    path('addSupplier/', addSupplier, name='addSupplier'),     # Add new supplier
+    path('viewSupplier/<int:supplier_id>/', viewSupplier, name='viewSupplier'),     # View supplier details
+    path('editSupplier/<int:supplier_id>/', editSupplier, name='editSupplier'),     # Edit supplier
+    path('deleteSupplier/<int:supplier_id>/', deleteSupplier, name='deleteSupplier'), # Delete supplier
     
     # ===== SALES MANAGEMENT =====
     path('addSale/', addSale, name='addSale'),              # Create new sale

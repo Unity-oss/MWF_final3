@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Edit Employee - MWF{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+  <header class="text-center mb-8">
+    <h1 class="text-3xl text-gray-800">Edit Employee</h1>
+  </header>
+
+  <form method="post" action="{% url 'editEmployee' employee.id %}" class="crispy-form">
+    {% csrf_token %}
+    {% include 'forms/employee_form.html' %}
+  </form>
+</div>
+{% endblock %}
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Username (Read-only) -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-control" value="{{ employee.username }}" readonly>
+                                <div class="form-text">Username cannot be changed</div>
+                            </div>
+                        </div>
+
+                        <!-- First Name and Last Name -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="first_name" class="form-label">First Name *</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" 
+                                       value="{{ employee.first_name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="last_name" class="form-label">Last Name *</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" 
+                                       value="{{ employee.last_name }}" required>
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ employee.email }}">
+                            </div>
+                        </div>
+
+                        <!-- New Password -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label for="password" class="form-label">New Password</label>
+                                <input type="password" class="form-control" id="password" name="password">
+                                <div class="form-text">Leave blank to keep current password</div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'employee_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Employee List
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update Employee
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

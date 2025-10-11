@@ -36,8 +36,8 @@ from functools import wraps
 from datetime import datetime
 
 # Local application imports
-from home.models import Sale, Stock, Notification
-from .forms import SaleForm, StockForm, LoginForm
+from home.models import Sale, Stock, Notification, Customer, Supplier
+from .forms import SaleForm, StockForm, LoginForm, CustomerForm, SupplierForm
 
 # ===== SECURITY DECORATORS =====
 # Decorator to restrict access to managers only
@@ -646,7 +646,7 @@ def stock_data_api(request):
 
 
 @login_required
-@user_passes_test(is_employee_or_manager)
+@manager_required
 def employee_list(request):
     # Get all users who are in Employee or Manager groups
     employees = User.objects.filter(groups__name__in=['Employee', 'Manager']).distinct()
@@ -654,64 +654,7 @@ def employee_list(request):
 
 
 
-@login_required
-@user_passes_test(is_employee_or_manager)
-def addEmployee(request):
-    if request.method == "POST":
-        username = request.POST["username"]
-        first_name = request.POST["first_name"]
-        last_name = request.POST["last_name"]
-        email = request.POST["email"]
-        password = request.POST["password"]
-        title = request.POST["title"]
 
-        try:
-            # Check if username already exists
-            if User.objects.filter(username=username).exists():
-                messages.error(request, f"Username '{username}' is already taken. Please choose a different username.")
-                return render(request, "add_employee.html")
-            
-            # Check if email already exists
-            if User.objects.filter(email=email).exists():
-                messages.error(request, f"Email '{email}' is already registered. Please use a different email.")
-                return render(request, "add_employee.html")
-
-            # Create User
-            new_user = User.objects.create_user(
-                username=username,
-                first_name=first_name,
-                last_name=last_name,
-                email=email,
-                password=password
-            )
-
-            # Add user to appropriate group based on title
-            from django.contrib.auth.models import Group
-            if title in ["SalesAgent", "StockClerk"]:
-                group_name = "Employee"
-            else:
-                group_name = "Manager"
-            
-            group, created = Group.objects.get_or_create(name=group_name)
-            new_user.groups.add(group)
-
-            # Notify managers
-            managers = User.objects.filter(groups__name="Manager")
-            for manager in managers:
-                Notification.objects.create(
-                    user=manager,
-                    message=f"A new {group_name.lower()} '{new_user.username}' was added with role: {title}.",
-                    activity_type="info"
-                )
-
-            messages.success(request, f"Employee '{username}' has been successfully created with role: {title}.")
-            return redirect("employee_list")
-            
-        except Exception as e:
-            messages.error(request, f"An error occurred while creating the employee: {str(e)}")
-            return render(request, "add_employee.html")
-
-    return render(request, "add_employee.html")
 
 
 
@@ -1242,5 +1185,262 @@ def stockReport(request):
     return render(request, "stock_report.html", context)
 
 
+# ===== CUSTOMER MANAGEMENT VIEWS =====
+
+def customerList(request):
+    """Display list of all customers - accessible by both managers and employees"""
+    customers = Customer.objects.all().order_by('-created_at')
+    
+    context = {
+        'customers': customers,
+        'is_manager': request.user.groups.filter(name="Manager").exists(),
+        'is_employee': request.user.groups.filter(name="Employee").exists(),
+    }
+    return render(request, 'customerlist.html', context)
+
+
+def addCustomer(request):
+    """Add new customer - accessible by both managers and employees"""
+    if request.method == 'POST':
+        form = CustomerForm(request.POST)
+        if form.is_valid():
+            customer = form.save()
+            messages.success(request, f'Customer "{customer.name}" added successfully!')
+            return redirect('customerList')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = CustomerForm()
+    
+    context = {
+        'form': form,
+        'is_manager': request.user.groups.filter(name="Manager").exists(),
+        'is_employee': request.user.groups.filter(name="Employee").exists(),
+    }
+    return render(request, 'add_customer.html', context)
+
+
+def editCustomer(request, customer_id):
+    """Edit existing customer - accessible by both managers and employees"""
+    customer = get_object_or_404(Customer, id=customer_id)
+    
+    if request.method == 'POST':
+        form = CustomerForm(request.POST, instance=customer)
+        if form.is_valid():
+            customer = form.save()
+            messages.success(request, f'Customer "{customer.name}" updated successfully!')
+            return redirect('customerList')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = CustomerForm(instance=customer)
+    
+    context = {
+        'form': form,
+        'customer': customer,
+        'is_manager': request.user.groups.filter(name="Manager").exists(),
+        'is_employee': request.user.groups.filter(name="Employee").exists(),
+    }
+    return render(request, 'edit_customer.html', context)
+
+
+def deleteCustomer(request, customer_id):
+    """Delete customer - accessible by both managers and employees"""
+    customer = get_object_or_404(Customer, id=customer_id)
+    
+    if request.method == 'POST':
+        customer_name = customer.name
+        customer.delete()
+        messages.success(request, f'Customer "{customer_name}" deleted successfully!')
+        return redirect('customerList')
+    
+    context = {
+        'customer': customer,
+        'is_manager': request.user.groups.filter(name="Manager").exists(),
+        'is_employee': request.user.groups.filter(name="Employee").exists(),
+    }
+    return render(request, 'delete_customer.html', context)
+
+
+# ===== SUPPLIER MANAGEMENT VIEWS =====
+
+def supplierList(request):
+    """Display list of all suppliers - accessible by both managers and employees"""
+    suppliers = Supplier.objects.all().order_by('-created_at')
+    
+    context = {
+        'suppliers': suppliers,
+        'is_manager': request.user.groups.filter(name="Manager").exists(),
+        'is_employee': request.user.groups.filter(name="Employee").exists(),
+    }
+    return render(request, 'supplierlist.html', context)
+
+
+def addSupplier(request):
+    """Add new supplier - accessible by both managers and employees"""
+    if request.method == 'POST':
+        form = SupplierForm(request.POST)
+        if form.is_valid():
+            supplier = form.save()
+            messages.success(request, f'Supplier "{supplier.name}" added successfully!')
+            return redirect('supplierList')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = SupplierForm()
+    
+    context = {
+        'form': form,
+        'is_manager': request.user.groups.filter(name="Manager").exists(),
+        'is_employee': request.user.groups.filter(name="Employee").exists(),
+    }
+    return render(request, 'add_supplier.html', context)
+
+
+def editSupplier(request, supplier_id):
+    """Edit existing supplier - accessible by both managers and employees"""
+    supplier = get_object_or_404(Supplier, id=supplier_id)
+    
+    if request.method == 'POST':
+        form = SupplierForm(request.POST, instance=supplier)
+        if form.is_valid():
+            supplier = form.save()
+            messages.success(request, f'Supplier "{supplier.name}" updated successfully!')
+            return redirect('supplierList')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = SupplierForm(instance=supplier)
+    
+    context = {
+        'form': form,
+        'supplier': supplier,
+        'is_manager': request.user.groups.filter(name="Manager").exists(),
+        'is_employee': request.user.groups.filter(name="Employee").exists(),
+    }
+    return render(request, 'edit_supplier.html', context)
+
+
+def deleteSupplier(request, supplier_id):
+    """Delete supplier - accessible by both managers and employees"""
+    supplier = get_object_or_404(Supplier, id=supplier_id)
+    
+    if request.method == 'POST':
+        supplier_name = supplier.name
+        supplier.delete()
+        messages.success(request, f'Supplier "{supplier_name}" deleted successfully!')
+        return redirect('supplierList')
+    
+    context = {
+        'supplier': supplier,
+        'is_manager': request.user.groups.filter(name="Manager").exists(),
+        'is_employee': request.user.groups.filter(name="Employee").exists(),
+    }
+    return render(request, 'delete_supplier.html', context)
+
+
+# ===== EMPLOYEE MANAGEMENT VIEWS =====
+
+@manager_required
+def addEmployee(request):
+    """Add new employee - accessible by managers only"""
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        
+        # Create user
+        try:
+            user = User.objects.create_user(
+                username=username,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                password=password
+            )
+            
+            # Add to Employee group
+            from django.contrib.auth.models import Group
+            employee_group, created = Group.objects.get_or_create(name='Employee')
+            user.groups.add(employee_group)
+            
+            messages.success(request, f'Employee "{first_name} {last_name}" added successfully!')
+            return redirect('employee_list')
+        except Exception as e:
+            messages.error(request, f'Error creating employee: {str(e)}')
+    
+    context = {
+        'is_manager': True,
+        'is_employee': False,
+    }
+    return render(request, 'add_employee.html', context)
+
+
+@manager_required
+def editEmployee(request, employee_id):
+    """Edit existing employee - accessible by managers only"""
+    employee = get_object_or_404(User, id=employee_id)
+    
+    if request.method == 'POST':
+        employee.first_name = request.POST.get('first_name', '')
+        employee.last_name = request.POST.get('last_name', '')
+        employee.email = request.POST.get('email', '')
+        
+        # Update password if provided
+        new_password = request.POST.get('password')
+        if new_password:
+            employee.set_password(new_password)
+        
+        employee.save()
+        messages.success(request, f'Employee "{employee.first_name} {employee.last_name}" updated successfully!')
+        return redirect('employee_list')
+    
+    context = {
+        'employee': employee,
+        'is_manager': True,
+        'is_employee': False,
+    }
+    return render(request, 'edit_employee.html', context)
+
+
+@manager_required
+def deleteEmployee(request, employee_id):
+    """Delete employee - accessible by managers only"""
+    employee = get_object_or_404(User, id=employee_id)
+    
+    if request.method == 'POST':
+        employee_name = f"{employee.first_name} {employee.last_name}".strip() or employee.username
+        employee.delete()
+        messages.success(request, f'Employee "{employee_name}" deleted successfully!')
+        return redirect('employee_list')
+    
+    context = {
+        'employee': employee,
+        'is_manager': True,
+        'is_employee': False,
+    }
+    return render(request, 'delete_employee.html', context)
+
+@login_required
+@user_passes_test(is_employee_or_manager)
+def viewCustomer(request, customer_id):
+    """
+    View customer details - display customer information in a clean format
+    """
+    customer = get_object_or_404(Customer, id=customer_id)
+    context = {'customer': customer}
+    return render(request, 'view_customer.html', context)
+
+@login_required
+@user_passes_test(is_employee_or_manager)
+def viewSupplier(request, supplier_id):
+    """
+    View supplier details - display supplier information in a clean format
+    """
+    supplier = get_object_or_404(Supplier, id=supplier_id)
+    context = {'supplier': supplier}
+    return render(request, 'view_supplier.html', context)
 
 

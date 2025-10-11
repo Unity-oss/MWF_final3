@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}View Customer - MWF{% endblock %}
+
+{% block extra_head %}
+<style>
+    .readonly-form .form-control[readonly] {
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        color: #6b7280;
+    }
+    
+    .readonly-form .form-group label {
+        font-weight: 600;
+        color: #374151;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Customer Details</h1>
+            <p class="text-gray-600 mt-2">View customer information</p>
+        </div>
+        
+        <!-- Clean template-based display -->
+        <div class="bg-white p-6 rounded-lg shadow-sm">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Customer Name -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Customer Name</label>
+                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{{ customer.name }}</p>
+                </div>
+                
+                <!-- Phone -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Phone Number</label>
+                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                        {% if customer.phone %}{{ customer.phone }}{% else %}<span class="text-gray-400 italic">Not provided</span>{% endif %}
+                    </p>
+                </div>
+                
+                <!-- Email -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Email Address</label>
+                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                        {% if customer.email %}{{ customer.email }}{% else %}<span class="text-gray-400 italic">Not provided</span>{% endif %}
+                    </p>
+                </div>
+                
+                <!-- Address -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Physical Address</label>
+                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                        {% if customer.address %}{{ customer.address }}{% else %}<span class="text-gray-400 italic">Not provided</span>{% endif %}
+                    </p>
+                </div>
+                
+                <!-- Date Added -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Date Added</label>
+                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{{ customer.created_at|date:"M d, Y H:i" }}</p>
+                </div>
+                
+                <!-- Last Updated -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Last Updated</label>
+                    <p class="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{{ customer.updated_at|date:"M d, Y H:i" }}</p>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="mt-6 flex space-x-3">
+                <a href="{% url 'editCustomer' customer.id %}" class="btn bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
+                    <i class="fas fa-edit mr-2"></i>Edit Customer
+                </a>
+                <a href="{% url 'customerList' %}" class="btn bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Customers
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

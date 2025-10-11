@@ -1,82 +1,78 @@
 {% extends 'base.html' %}
 
-{% block title %}Add EMPLOYEE - MWF{% endblock %}
+{% block title %}Add Employee - MWF{% endblock %}
 
 {% block content %}
-<section class="bg-white p-1 xs:p-8">
-  <div class="max-w-96 sm:max-w-4xl mx-auto border border-[#007b83] rounded-lg p-8">
-    <h2 class="sm:text-xl text-[12px] font-bold mb-6">Add New Employee</h2>
+<div class="max-w-4xl mx-auto">
+  <header class="text-center mb-8">
+    <h1 class="text-3xl text-gray-800">Add New Employee</h1>
+  </header>
+
+  <form method="post" action="{% url 'addEmployee' %}" class="employee-form">
+    {% csrf_token %}
+    {% include 'forms/employee_form.html' %}
+  </form>
+</div>
+
+<!-- Employee Form JavaScript -->
+<script>
+  // Employee form validation and enhancement
+  document.addEventListener('DOMContentLoaded', function() {
     
-    <form method="post" action="/addEmployee/">
-      {% csrf_token %}
-      <div class="space-y-6">
-
-        <!-- Username / First Name / Last Name / email -->
-        <div class="grid sm:grid-cols-2 grid-cols-1 gap-6">
-          <div class="mb-6">
-            <label for="first_name" class="block mb-2 text-sm font-medium text-gray-900">First Name</label>
-            <input type="text" id="first_name" name="first_name" value="{{ request.POST.first_name|default:'' }}"
-              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5"
-              required>
-          </div>
-          <div class="mb-6">
-            <label for="last_name" class="block mb-2 text-sm font-medium text-gray-900">Last Name</label>
-            <input type="text" id="last_name" name="last_name" value="{{ request.POST.last_name|default:'' }}"
-              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5"
-              required>
-          </div>
-           <div class="mb-6">
-            <label for="username" class="block mb-2 text-sm font-medium text-gray-900">Username</label>
-            <input type="text" id="username" name="username" value="{{ request.POST.username|default:'' }}"
-              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5"
-              required>
-          </div>
-           <div class="mb-6">
-            <label for="email" class="block mb-2 text-sm font-medium text-gray-900">Email Address</label>
-            <input type="email" id="email" name="email" value="{{ request.POST.email|default:'' }}"
-              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5"
-              required>
-          </div>
-        </div>
-
-        <!-- Email / Password / Confirm Password -->
-        <div class="grid sm:grid-cols-2 grid-cols-1 gap-6">
-          <div class="mb-6">
-            <label for="password" class="block mb-2 text-sm font-medium text-gray-900">Password</label>
-            <input type="password" id="password" name="password"
-              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5"
-              required>
-          </div>
-          <div class="mb-6">
-            <label for="confirm_password" class="block mb-2 text-sm font-medium text-gray-900">Confirm Password</label>
-            <input type="password" id="confirm_password" name="confirm_password"
-              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5"
-              required>
-          </div>
-        </div>
-
-        <!-- Role Selection -->
-        <div class="md:col-span-2">
-          <label for="title" class="block mb-2 text-sm font-medium text-gray-900">Select Role</label>
-          <select name="title" id="title" required
-            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none transition duration-150 ease-in-out text-lg">
-            <option value="">Select role</option>
-            <option value="SalesAgent" {% if request.POST.title == 'SalesAgent' %}selected{% endif %}>Sales Agent</option>
-            <option value="StockClerk" {% if request.POST.title == 'StockClerk' %}selected{% endif %}>Stock Clerk</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="flex flex-col md:flex-row gap-2 mt-6">
-        <button
-          class="bg-[#007b83] hover:bg-[#005f66] text-white font-medium py-2 px-4 rounded-lg transition duration-200 ease-in-out"
-          type="submit">Save</button>
-        <a href="/dashboard/" class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200 ease-in-out text-center"> Cancel</a>
-          </button>
-      </div>
-
-    </form>
-  </div>
-</section>
+    // Password confirmation validation
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+    
+    if (password && confirmPassword) {
+      function validatePasswordMatch() {
+        if (confirmPassword.value !== password.value) {
+          confirmPassword.setCustomValidity('Passwords do not match');
+        } else {
+          confirmPassword.setCustomValidity('');
+        }
+      }
+      
+      password.addEventListener('input', validatePasswordMatch);
+      confirmPassword.addEventListener('input', validatePasswordMatch);
+    }
+    
+    // Username validation
+    const username = document.getElementById('username');
+    if (username) {
+      username.addEventListener('input', function() {
+        // Remove spaces and special characters for username
+        this.value = this.value.replace(/[^a-zA-Z0-9._]/g, '');
+      });
+    }
+    
+    // Form validation styling
+    const form = document.querySelector('.employee-form');
+    if (form) {
+      form.addEventListener('submit', function(event) {
+        const inputs = form.querySelectorAll('input[required]');
+        let isValid = true;
+        
+        inputs.forEach(input => {
+          if (!input.value.trim()) {
+            input.classList.add('border-red-500');
+            isValid = false;
+          } else {
+            input.classList.remove('border-red-500');
+            input.classList.add('border-green-500');
+          }
+        });
+        
+        if (!isValid) {
+          event.preventDefault();
+          // Scroll to first error
+          const firstError = form.querySelector('.border-red-500');
+          if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstError.focus();
+          }
+        }
+      });
+    }
+  });
+</script>
 {% endblock %}
