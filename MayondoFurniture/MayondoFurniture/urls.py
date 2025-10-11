@@ -1,7 +1,6 @@
 """
-MAYONDO FURNITURE    # Import all view functions from the home app
-from home.views import landingPage, loginPage, logoutPage, dashBoard, addSale, saleRecord, viewSingleSale,editSale,updateSale,deleteSale, saleReport,stockRecord, stockReport, report, addStock, addUser,activityFeed, notifications, sales_report, stock_report, viewSingleStock, editStock, updateStock, deleteStock, mark_notification_read, generateReceiptANAGEMENT SYSTEM - URL CONFIGURATION
-=======================================================
+MAYONDO FURNITURE - URL CONFIGURATION
+=====================================
 
 This file defines all the URL patterns for the application, mapping URLs to their
 corresponding view functions.
@@ -24,12 +23,12 @@ from django.urls import path
 # Import all view functions from the home app
 from home.views import (
     landingPage, loginPage, logoutPage, dashBoard, addSale, saleRecord, 
-    viewSingleSale, editSale, updateSale, deleteSale, saleReport, stockRecord, 
+    viewSingleSale, editSale, deleteSale, saleReport, stockRecord, 
     stockReport, report, addStock, addEmployee, employee_list, activityFeed, notifications, 
-    sales_report, stock_report, viewSingleStock, editStock, updateStock, 
+    sales_report, stock_report, viewSingleStock, editStock, 
     deleteStock, mark_notification_read, mark_all_notifications_read, generateReceipt,
     stock_data_api, customerList, addCustomer, viewCustomer, editCustomer, deleteCustomer,
-    supplierList, addSupplier, viewSupplier, editSupplier, deleteSupplier, editEmployee, deleteEmployee
+    supplierList, addSupplier, viewSupplier, editSupplier, deleteSupplier, editEmployee, viewEmployee, deleteEmployee
 )
 from home.search import search_dashboard
 
@@ -46,6 +45,7 @@ urlpatterns = [
     # ===== USER MANAGEMENT =====
     path('addEmployee/', addEmployee, name='addEmployee'),      # Add new users (managers only)
     path('employee_list/', employee_list, name='employee_list'), # view all employees
+    path('viewEmployee/<int:employee_id>/', viewEmployee, name='viewEmployee'),     # View employee details
     path('editEmployee/<int:employee_id>/', editEmployee, name='editEmployee'),     # Edit employee
     path('deleteEmployee/<int:employee_id>/', deleteEmployee, name='deleteEmployee'), # Delete employee
     
@@ -93,14 +93,12 @@ urlpatterns = [
     # ===== DYNAMIC URLS - SALES CRUD OPERATIONS =====
     path('view/<str:product_id>/', viewSingleSale, name='view_sale'),     # View individual sale
     path('edit/<str:product_id>/', editSale, name='edit_sale'),           # Edit sale form
-    path('update/<str:product_id>/', updateSale, name='update_sale'),     # Update sale (POST)
     path('delete/<str:product_id>/', deleteSale, name='delete_sale'),     # Delete sale
     path('receipt/<str:product_id>/', generateReceipt, name='generate_receipt'), # Generate receipt
     
     # ===== DYNAMIC URLS - STOCK CRUD OPERATIONS =====
     path('viewStock/<str:product_id>/', viewSingleStock, name='view_stock'),    # View individual stock item
     path('editStock/<str:product_id>/', editStock, name='edit_stock'),          # Edit stock form  
-    path('updateStock/<str:product_id>/', updateStock, name='update_stock'),    # Update stock (POST)
     path('deleteStock/<str:product_id>/', deleteStock, name='delete_stock')     # Delete stock item
 ]
 

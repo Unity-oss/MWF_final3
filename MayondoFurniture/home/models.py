@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from datetime import datetime, date
+from decimal import Decimal
 import uuid
 
 # ===== MAYONDO FURNITURE MANAGEMENT SYSTEM MODELS =====
@@ -153,7 +154,7 @@ class Sale(models.Model):
             base_amount = self.quantity * self.unit_price
             # Add 5% transport fee if transport is required
             if self.transport_required:
-                transport_fee = base_amount * 0.05
+                transport_fee = base_amount * Decimal('0.05')
                 self.total_sales_amount = base_amount + transport_fee
             else:
                 self.total_sales_amount = base_amount
@@ -225,7 +226,7 @@ class Sale(models.Model):
         """
         if self.quantity and self.unit_price:
             return self.quantity * self.unit_price
-        return 0
+        return Decimal('0')
 
     @property
     def transport_fee(self):
@@ -233,8 +234,8 @@ class Sale(models.Model):
         Calculate 5% transport fee if transport is required
         """
         if self.transport_required and self.base_amount:
-            return self.base_amount * 0.05
-        return 0
+            return self.base_amount * Decimal('0.05')
+        return Decimal('0')
 
     @property
     def final_amount(self):

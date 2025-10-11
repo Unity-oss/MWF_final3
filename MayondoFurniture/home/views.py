@@ -489,7 +489,7 @@ def dashBoard(request):
         
         # Create a copy of the sale with additional amount and transport fee info
         sale.total_amount = total_amount
-        sale.transport_fee = transport_fee
+        # Note: transport_fee is now a property, so no need to set it
         sales_with_amounts.append(sale)
 
     if is_manager:
@@ -999,20 +999,6 @@ def viewSingleSale(request, product_id):
 
 @login_required
 @user_passes_test(is_employee_or_manager)
-def updateSale(request, product_id):
-    sale_to_update = get_object_or_404(Sale, id=product_id)
-    if request.method == 'POST':
-        form_data = request.POST
-        new_product_type = form_data.get('product_type')
-        sale_to_update.product_type = new_product_type
-        sale_to_update.save()
-        return redirect('/saleRecord/')
-    context = {
-        "selected": sale_to_update
-    }
-    return render(request, 'update_sale.html', context)
-
-
 @login_required
 @user_passes_test(is_employee_or_manager)
 def deleteSale(request, product_id):
@@ -1151,19 +1137,6 @@ def deleteStock(request, product_id):
 
 @login_required
 @user_passes_test(is_employee_or_manager)
-def updateStock(request, product_id):
-    stock_to_update = get_object_or_404(Stock, id=product_id)
-    if request.method == 'POST':
-        form_data = request.POST
-        new_product_type = form_data.get('product_type')
-        stock_to_update.product_type = new_product_type
-        stock_to_update.save()
-        return redirect('/stockRecord/')
-    context = {
-        "selected": stock_to_update
-    }
-    return render(request, 'update_stock.html', context)
-
 @manager_required
 def stockReport(request):
     all_Stock = Stock.objects.select_related('supplier').all()
@@ -1444,6 +1417,17 @@ def editEmployee(request, employee_id):
         'is_employee': False,
     }
     return render(request, 'edit_employee.html', context)
+
+
+@login_required
+@user_passes_test(is_employee_or_manager)
+def viewEmployee(request, employee_id):
+    """
+    View employee details - display employee information in a clean format
+    """
+    employee = get_object_or_404(User, id=employee_id)
+    context = {'employee': employee}
+    return render(request, 'view_employee.html', context)
 
 
 @manager_required
