@@ -37,4 +37,25 @@
             {% include 'forms/stock_form.html' %}
         </form>
     </div>
+
+    <script>
+        // Auto-calculate total cost for stock form
+        function calculateStockTotal() {
+            const quantity = parseFloat(document.getElementById('id_quantity').value) || 0;
+            const unitCost = parseFloat(document.getElementById('id_unit_cost').value) || 0;
+            const totalCostField = document.getElementById('id_total_cost');
+            
+            if (quantity && unitCost) {
+                const totalCost = quantity * unitCost;
+                totalCostField.value = totalCost.toFixed(2);
+            } else {
+                totalCostField.value = '';
+            }
+        }
+
+        // Initialize calculation on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            calculateStockTotal();
+        });
+    </script>
 {% endblock %}

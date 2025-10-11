@@ -214,7 +214,7 @@ class StockForm(forms.ModelForm):
     """
     class Meta:
         model = Stock   # Based on Stock model
-        fields = ['product_name', 'product_type', 'quantity', 'date', 'supplier_name', 'cost', 'price', 'origin']
+        fields = ['product_name', 'product_type', 'quantity', 'date', 'supplier_name', 'unit_cost', 'total_cost', 'price', 'origin']
         # Using separate product_name and product_type fields for better display
         
         # Custom error messages for better user experience
@@ -242,12 +242,16 @@ class StockForm(forms.ModelForm):
                 'max_length': 'Supplier name is too long. Please use 100 characters or less.',
                 'invalid': 'Please enter a valid supplier name.',
             },
-            'cost': {
-                'required': 'Cost price is required. Please enter the total cost of this stock.',
-                'invalid': 'Please enter a valid cost amount (numbers only, no currency symbols).',
+            'unit_cost': {
+                'required': 'Unit cost is required. Please enter the cost per item.',
+                'invalid': 'Please enter a valid unit cost amount.',
+                'min_value': 'Unit cost must be greater than 0.',
+                'max_digits': 'Unit cost is too large. Please enter a reasonable amount.',
+            },
+            'total_cost': {
+                'invalid': 'Please enter a valid total cost amount.',
             },
             'price': {
-                'required': 'Selling price is required. Please enter the unit selling price.',
                 'invalid': 'Please enter a valid price amount (numbers only, no currency symbols).',
             },
             'origin': {
@@ -263,7 +267,8 @@ class StockForm(forms.ModelForm):
             'quantity': 'Stock Quantity',
             'date': 'Stock Date',
             'supplier_name': 'Supplier Name',
-            'cost': 'Total Cost (UGX)',
+            'unit_cost': 'Unit Cost (UGX)',
+            'total_cost': 'Total Cost (UGX)',
             'price': 'Unit Price (UGX)',
             'origin': 'Origin Region',
         }
@@ -275,7 +280,8 @@ class StockForm(forms.ModelForm):
             'quantity': 'Number of items to add to stock',
             'date': 'Date when the stock was received (cannot be in the future)',
             'supplier_name': 'Name of the supplier who provided this stock',
-            'cost': 'Total cost paid for this entire stock quantity',
+            'unit_cost': 'Cost per individual item in UGX',
+            'total_cost': 'Automatically calculated when you enter quantity and unit cost',
             'price': 'Selling price per unit item',
             'origin': 'Region where this stock originated from',
         }
@@ -288,11 +294,26 @@ class StockForm(forms.ModelForm):
             'quantity': forms.NumberInput(attrs={
                 'min': '1',
                 'step': '1',
-                'title': 'Quantity must be greater than 0'
+                'title': 'Quantity must be greater than 0',
+                'id': 'id_quantity',
+                'onchange': 'calculateStockTotal()',
+                'oninput': 'calculateStockTotal()'
             }),
-            'cost': forms.TextInput(attrs={
-                'title': 'Cost must be greater than 0',
-                'placeholder': 'e.g., 500000'
+            'unit_cost': forms.NumberInput(attrs={
+                'min': '0.01',
+                'step': '0.01',
+                'title': 'Unit cost must be greater than 0',
+                'id': 'id_unit_cost',
+                'placeholder': 'e.g., 15000',
+                'onchange': 'calculateStockTotal()',
+                'oninput': 'calculateStockTotal()'
+            }),
+            'total_cost': forms.NumberInput(attrs={
+                'readonly': 'readonly',
+                'id': 'id_total_cost',
+                'title': 'This field is automatically calculated',
+                'class': 'readonly-field',
+                'tabindex': '-1'
             }),
             'price': forms.TextInput(attrs={
                 'title': 'Price must be greater than 0',
@@ -308,7 +329,7 @@ class StockForm(forms.ModelForm):
         self.fields['date'].widget.attrs['max'] = date.today().strftime('%Y-%m-%d')
         
         # Add required attributes for client-side validation
-        required_fields = ['product_name', 'product_type', 'quantity', 'date', 'supplier_name', 'cost', 'price', 'origin']
+        required_fields = ['product_name', 'product_type', 'quantity', 'date', 'supplier_name', 'unit_cost', 'price', 'origin']
         for field_name in required_fields:
             if field_name in self.fields:
                 self.fields[field_name].widget.attrs['required'] = 'required'
@@ -367,5 +388,4 @@ class LoginForm(forms.Form):
     )
 
 
-# ✅ Forms are now clean and focus only on validation logic
-# HTML layouts and styling are handled by template snippets for better separation of concerns
+

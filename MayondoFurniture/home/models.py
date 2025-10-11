@@ -206,9 +206,12 @@ class Stock(models.Model):
     quantity = models.IntegerField()  # Number of items available
     supplier_name = models.CharField(max_length=100)  # Who supplied this product
     
-    # Pricing information (stored as CharField for flexibility)
-    cost = models.CharField()  # Total cost price
-    price = models.CharField()  # Unit selling price
+    # Pricing information
+    unit_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, 
+                                   help_text="Cost per unit item in dollars")
+    total_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, 
+                                    help_text="Automatically calculated from quantity × unit cost")
+    price = models.CharField(help_text="Unit selling price")  # Unit selling price
     
     # Additional details
     origin = models.CharField(max_length=20, choices=ORIGIN_CHOICES)  # Where the product came from
@@ -245,18 +248,17 @@ class Stock(models.Model):
                 'product_type': 'Invalid product type. Please select Wood or Furniture.'
             })
         
-        # Validate cost and price are positive (if they contain numeric values)
-        if self.cost:
-            try:
-                cost_value = float(self.cost.replace(',', ''))  # Remove commas for validation
-                if cost_value <= 0:
-                    raise ValidationError({
-                        'cost': 'Cost must be greater than 0. Please enter a positive amount.'
-                    })
-            except (ValueError, AttributeError):
-                # If cost is not numeric, we'll allow it (for flexibility)
-                pass
+        # Validate unit_cost is positive
+        if self.unit_cost is not None and self.unit_cost <= 0:
+            raise ValidationError({
+                'unit_cost': 'Unit cost must be greater than 0. Please enter a positive amount.'
+            })
         
+        # Auto-calculate total cost
+        if self.quantity is not None and self.unit_cost is not None:
+            self.total_cost = self.quantity * self.unit_cost
+        
+        # Validate price is positive (if it contains numeric values)
         if self.price:
             try:
                 price_value = float(self.price.replace(',', ''))  # Remove commas for validation

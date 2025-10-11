@@ -367,7 +367,7 @@ Key Features:
       <!-- Main Dashboard Content -->
       <main class="p-6">
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <!-- Revenue Card -->
           <div
             class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
@@ -447,6 +447,47 @@ Key Features:
               <div
                 class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                 <img src="https://cdn-icons-png.flaticon.com/128/11000/11000643.png" alt="Total Stock" class="w-8 h-8">
+              </div>
+            </div>
+          </div>
+
+          <!-- Profit Card -->
+          <div
+            class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow {% if data.profit < 0 %}border-red-300 bg-red-50{% elif data.profit > 0 %}border-green-300 bg-green-50{% endif %}"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="flex items-center space-x-2">
+                  <p class="text-lg font-bold text-black">Total Profit</p>
+                  {% if data.profit < 0 %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      Loss
+                    </span>
+                  {% elif data.profit > 0 %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Profit
+                    </span>
+                  {% endif %}
+                </div>
+                <p class="text-2xl font-bold {% if data.profit < 0 %}text-red-600{% elif data.profit > 0 %}text-green-600{% else %}text-gray-900{% endif %} mt-2">
+                  UGX {{ data.profit|floatformat:0|default:"0" }}
+                </p>
+                {% if data.profit != 0 %}
+                  <p class="text-xs {% if data.profit < 0 %}text-red-600{% else %}text-green-600{% endif %} font-medium">
+                    Revenue: UGX {{ data.total_revenue|floatformat:0|default:"0" }} - Costs: UGX {{ data.total_cost_of_sales|floatformat:0|default:"0" }}
+                  </p>
+                {% endif %}
+              </div>
+              <div
+                class="w-12 h-12 {% if data.profit < 0 %}bg-red-100{% elif data.profit > 0 %}bg-green-100{% else %}bg-gray-100{% endif %} rounded-lg flex items-center justify-center"
+              >
+                {% if data.profit < 0 %}
+                  <i class="fas fa-arrow-down text-red-600 text-xl"></i>
+                {% elif data.profit > 0 %}
+                  <i class="fas fa-arrow-up text-green-600 text-xl"></i>
+                {% else %}
+                  <i class="fas fa-balance-scale text-gray-600 text-xl"></i>
+                {% endif %}
               </div>
             </div>
           </div>

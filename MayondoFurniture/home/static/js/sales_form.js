@@ -30,7 +30,7 @@ class SalesFormManager {
      * Initialize the sales form manager
      */
     async init() {
-        console.log('🚀 Initializing Sales Form Manager...');
+        console.log(' Initializing Sales Form Manager...');
         
         // Wait for DOM to be ready
         if (document.readyState === 'loading') {
@@ -57,9 +57,9 @@ class SalesFormManager {
             // Initial validation
             this.updateQuantityLimits();
             
-            console.log('✅ Sales Form Manager initialized successfully');
+            console.log(' Sales Form Manager initialized successfully');
         } catch (error) {
-            console.error('❌ Error initializing Sales Form Manager:', error);
+            console.error(' Error initializing Sales Form Manager:', error);
         }
     }
 
@@ -94,7 +94,7 @@ class SalesFormManager {
             // Check if we have a global stockData variable (fallback)
             if (typeof window.stockData !== 'undefined') {
                 this.stockData = window.stockData;
-                console.log('📦 Loaded stock data from global variable');
+                console.log(' Loaded stock data from global variable');
                 return;
             }
 
@@ -103,12 +103,12 @@ class SalesFormManager {
             if (response.ok) {
                 const data = await response.json();
                 this.stockData = data.stock_data || {};
-                console.log('📦 Loaded stock data from API');
+                console.log(' Loaded stock data from API');
             } else {
                 throw new Error(`API request failed: ${response.status}`);
             }
         } catch (error) {
-            console.warn('⚠️ Could not load stock data from API, using empty data:', error);
+            console.warn(' Could not load stock data from API, using empty data:', error);
             this.stockData = {};
         }
     }
@@ -159,7 +159,7 @@ class SalesFormManager {
         const { productName, productType, quantity } = this.formElements;
         
         if (!productName || !productType || !quantity) {
-            console.warn('⚠️ Form elements not found for quantity validation');
+            console.warn(' Form elements not found for quantity validation');
             return;
         }
 
@@ -214,10 +214,10 @@ class SalesFormManager {
         
         if (status === 'available') {
             helpText.className += ' text-green-600';
-            helpText.textContent = `✅ Available in stock: ${stockAmount} units`;
+            helpText.textContent = ` Available in stock: ${stockAmount} units`;
         } else {
             helpText.className += ' text-red-600';
-            helpText.textContent = '❌ This product combination is not available in stock';
+            helpText.textContent = ' This product combination is not available in stock';
         }
         
         container.appendChild(helpText);
@@ -276,7 +276,7 @@ class SalesFormManager {
             if (availableStock <= 0) {
                 event.preventDefault();
                 this.showValidationMessage(
-                    `❌ ${selectedProduct} (${selectedType}) is not available in stock`,
+                    ` ${selectedProduct} (${selectedType}) is not available in stock`,
                     'error'
                 );
                 return false;
@@ -285,7 +285,7 @@ class SalesFormManager {
             if (quantityValue > availableStock) {
                 event.preventDefault();
                 this.showValidationMessage(
-                    `❌ Cannot sell ${quantityValue} units. Only ${availableStock} units available`,
+                    ` Cannot sell ${quantityValue} units. Only ${availableStock} units available`,
                     'error'
                 );
                 return false;
@@ -342,20 +342,20 @@ class SalesFormManager {
         const { quantity, unitPrice, totalSalesAmount } = this.formElements;
         
         if (!quantity || !unitPrice || !totalSalesAmount) {
-            console.warn('⚠️ Some form elements not found for calculation');
+            console.warn(' Some form elements not found for calculation');
             return;
         }
 
         const quantityValue = parseFloat(quantity.value) || 0;
         const unitPriceValue = parseFloat(unitPrice.value) || 0;
         
-        console.log(`📊 Calculating total: ${quantityValue} × ${unitPriceValue}`);
+        console.log(` Calculating total: ${quantityValue} × ${unitPriceValue}`);
         
         if (quantityValue > 0 && unitPriceValue > 0) {
             const total = quantityValue * unitPriceValue;
             totalSalesAmount.value = total.toFixed(2);
             
-            console.log(`✅ Total calculated: ${total.toFixed(2)}`);
+            console.log(` Total calculated: ${total.toFixed(2)}`);
             
             // Visual feedback for successful calculation
             totalSalesAmount.style.backgroundColor = '#d4edda';
@@ -374,7 +374,7 @@ class SalesFormManager {
     updateStockData(newStockData) {
         this.stockData = newStockData;
         this.updateQuantityLimits();
-        console.log('📦 Stock data updated');
+        console.log(' Stock data updated');
     }
 }
 

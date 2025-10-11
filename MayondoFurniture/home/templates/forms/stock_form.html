@@ -51,21 +51,31 @@
         </div>
     </div>
 
-    <!-- Cost, Price, Origin (3 columns) -->
+    <!-- Unit Cost and Total Cost (2 columns) -->
     <div class="form-row mb-4">
-        <div class="col-md-4">
-            {{ form.cost|as_crispy_field }}
-            {% if form.cost.errors %}
-                <p class="text-red-600 text-sm">{{ form.cost.errors }}</p>
+        <div class="col-md-6">
+            {{ form.unit_cost|as_crispy_field }}
+            {% if form.unit_cost.errors %}
+                <p class="text-red-600 text-sm">{{ form.unit_cost.errors }}</p>
             {% endif %}
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
+            {{ form.total_cost|as_crispy_field }}
+            {% if form.total_cost.errors %}
+                <p class="text-red-600 text-sm">{{ form.total_cost.errors }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Price and Origin (2 columns) -->
+    <div class="form-row mb-4">
+        <div class="col-md-6">
             {{ form.price|as_crispy_field }}
             {% if form.price.errors %}
                 <p class="text-red-600 text-sm">{{ form.price.errors }}</p>
             {% endif %}
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
             {{ form.origin|as_crispy_field }}
             {% if form.origin.errors %}
                 <p class="text-red-600 text-sm">{{ form.origin.errors }}</p>

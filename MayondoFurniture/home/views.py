@@ -405,6 +405,8 @@ def dashBoard(request):
     
     # Calculate total revenue from sales (using price field which is unit price)
     total_revenue = 0
+    total_cost_of_sales = 0
+    profit = 0
     for sale in Sale.objects.all():
         try:
             # IMPROVED: Use foreign key relationship for better performance
@@ -425,9 +427,31 @@ def dashBoard(request):
                     sale_amount += transport_fee
                 
                 total_revenue += sale_amount
+                
+                # Calculate cost of sales for profit calculation
+                # Try to get the actual cost of this product from stock records
+                if sale.product_ref:
+                    stock_cost_items = Stock.objects.filter(product_ref=sale.product_ref)
+                else:
+                    stock_cost_items = Stock.objects.filter(product_name__iexact=sale.product_name, product_type__iexact=sale.product_type)
+                
+                # Calculate average unit cost from new model fields
+                unit_costs = []
+                for stock_cost_item in stock_cost_items:
+                    if stock_cost_item.unit_cost and stock_cost_item.unit_cost > 0:
+                        unit_costs.append(float(stock_cost_item.unit_cost))
+                
+                if unit_costs:
+                    avg_unit_cost = sum(unit_costs) / len(unit_costs)
+                    sale_cost = avg_unit_cost * sale.quantity
+                    total_cost_of_sales += sale_cost
+                    
         except (ValueError, TypeError):
             # Handle cases where price can't be converted to float
             continue
+    
+    # Calculate profit (Revenue - Cost of Sales)
+    profit = total_revenue - total_cost_of_sales
 
     # Enrich sales data with amount calculations including transport fees
     sales_with_amounts = []
@@ -476,6 +500,8 @@ def dashBoard(request):
             "low_stock_count": low_stock_count,
             "available_products": available_products,
             "total_revenue": total_revenue,
+            "total_cost_of_sales": total_cost_of_sales,
+            "profit": profit,
         }
     elif is_employee:
         data = {
@@ -489,6 +515,8 @@ def dashBoard(request):
             "low_stock_count": low_stock_count,
             "available_products": available_products,
             "total_revenue": total_revenue,
+            "total_cost_of_sales": total_cost_of_sales,
+            "profit": profit,
         }
     else:
         data = {}
