@@ -287,8 +287,6 @@ class StockForm(forms.ModelForm):
             'quantity': {
                 'required': 'Stock quantity is required. Please specify how many items to add.',
                 'invalid': 'Please enter a valid number for quantity.',
-                'min_value': 'Quantity must be at least 1. Cannot add zero or negative stock.',
-                'max_value': 'Quantity is too large. Please enter a reasonable stock amount.',
             },
             'date': {
                 'required': 'Stock date is required. Please select when the stock was received.',
@@ -298,7 +296,6 @@ class StockForm(forms.ModelForm):
             'unit_cost': {
                 'required': 'Unit cost is required. Please enter the cost per item.',
                 'invalid': 'Please enter a valid unit cost amount.',
-                'min_value': 'Unit cost must be greater than 0.',
                 'max_digits': 'Unit cost is too large. Please enter a reasonable amount.',
             },
             'total_cost': {
@@ -340,21 +337,21 @@ class StockForm(forms.ModelForm):
                 'title': 'Stock date cannot be in the future'
             }),
             'quantity': forms.NumberInput(attrs={
-                'min': '1',
                 'step': '1',
                 'title': 'Quantity must be greater than 0',
                 'id': 'id_quantity',
                 'onchange': 'calculateStockTotal()',
-                'oninput': 'calculateStockTotal()'
+                'oninput': 'calculateStockTotal()',
+                'novalidate': 'novalidate'  # Disable HTML5 validation
             }),
             'unit_cost': forms.NumberInput(attrs={
-                'min': '0.01',
-                'step': '0.01',
+                'step': '1000',
                 'title': 'Unit cost must be greater than 0',
                 'id': 'id_unit_cost',
-                'placeholder': 'e.g., 15000',
+                'placeholder': 'e.g., 1500',
                 'onchange': 'calculateStockTotal()',
-                'oninput': 'calculateStockTotal()'
+                'oninput': 'calculateStockTotal()',
+                'novalidate': 'novalidate'  # Disable HTML5 validation
             }),
             'total_cost': forms.NumberInput(attrs={
                 'readonly': 'readonly',
@@ -382,6 +379,35 @@ class StockForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         # All styling and layout is now handled by template snippets
+
+    def clean_unit_cost(self):
+        """Custom validation for unit cost field"""
+        unit_cost = self.cleaned_data.get('unit_cost')
+        if unit_cost is not None:
+            if unit_cost <= 0:
+                raise forms.ValidationError('Unit cost must be greater than 0. Please enter a positive amount.')
+            if unit_cost < 1000:
+                raise forms.ValidationError('Unit cost must be at least 1000 UGX.')
+        return unit_cost
+    
+    def clean_quantity(self):
+        """Custom validation for quantity field"""
+        quantity = self.cleaned_data.get('quantity')
+        if quantity is not None:
+            if quantity <= 0:
+                raise forms.ValidationError('Quantity must be at least 1. Cannot add zero or negative stock.')
+            if quantity > 10000:
+                raise forms.ValidationError('Quantity is too large. Please enter a reasonable stock amount.')
+        return quantity
+    
+    def clean_date(self):
+        """Custom validation for date field"""
+        stock_date = self.cleaned_data.get('date')
+        if stock_date:
+            from datetime import date
+            if stock_date > date.today():
+                raise forms.ValidationError('Stock date cannot be in the future. Please select today\'s date or an earlier date.')
+        return stock_date
 
 
 # Login Form for enhanced validation and error handling

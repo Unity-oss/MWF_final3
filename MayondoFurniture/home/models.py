@@ -334,11 +334,7 @@ class Stock(models.Model):
                 'product_type': 'Invalid product type. Please select Wood or Furniture.'
             })
         
-        # Validate unit_cost is positive
-        if self.unit_cost is not None and self.unit_cost <= 0:
-            raise ValidationError({
-                'unit_cost': 'Unit cost must be greater than 0. Please enter a positive amount.'
-            })
+        # Unit cost validation is now handled in the form's clean_unit_cost() method
         
         # Auto-calculate total cost
         if self.quantity is not None and self.unit_cost is not None:
