@@ -334,7 +334,6 @@ class Stock(models.Model):
                 'product_type': 'Invalid product type. Please select Wood or Furniture.'
             })
         
-        # Unit cost validation is now handled in the form's clean_unit_cost() method
         
         # Auto-calculate total cost
         if self.quantity is not None and self.unit_cost is not None:

@@ -118,10 +118,6 @@ def restrict_direct_access_OLD(view_func):
 # ===== MAIN APPLICATION VIEWS =====
 
 def landingPage(request):
-    """
-    Landing Page View - First page users see when visiting the site
-    Displays the main welcome page with system introduction
-    """
     return render(request, "index.html")
 
 
@@ -232,7 +228,7 @@ def create_low_stock_notifications():
         
         # Check each low stock item
         for item in low_stock_items:
-            notification_message = f"⚠️ LOW STOCK ALERT: {item.product_name} ({item.product_type}) - Only {item.quantity} units remaining"
+            notification_message = f" LOW STOCK ALERT: {item.product_name} ({item.product_type}) - Only {item.quantity} units remaining"
             
             # Check if we already sent a similar notification in the last 24 hours
             last_24_hours = datetime.now() - timedelta(hours=24)
@@ -292,7 +288,7 @@ def create_low_stock_notifications_consolidated(low_stock_products):
                         # Create a restocked notification
                         Notification.objects.create(
                             user=manager,
-                            message=f"✅ RESTOCKED: {product['product_name']} ({product['product_type']}) - Now {product['total_quantity']} units available",
+                            message=f" RESTOCKED: {product['product_name']} ({product['product_type']}) - Now {product['total_quantity']} units available",
                             activity_type="success"
                         )
         
@@ -300,7 +296,7 @@ def create_low_stock_notifications_consolidated(low_stock_products):
         last_24_hours = datetime.now() - timedelta(hours=24)
         
         for product in low_stock_products:
-            notification_message = f"⚠️ LOW STOCK ALERT: {product['product_name']} ({product['product_type']}) - Only {product['total_quantity']} units remaining"
+            notification_message = f" LOW STOCK ALERT: {product['product_name']} ({product['product_type']}) - Only {product['total_quantity']} units remaining"
             
             for manager in managers:
                 # Check if we already sent a similar notification in the last 24 hours
@@ -829,7 +825,7 @@ def addSale(request):
             quantity_to_sell = form.cleaned_data['quantity']
             print(f"DEBUG: Form is valid. Product: {product_name} ({product_type}), Quantity: {quantity_to_sell}")
 
-            # ✅ Check consolidated stock for this product combination
+            #  Check consolidated stock for this product combination
             from django.db.models import Sum
             consolidated_stock = Stock.objects.filter(
                 product_name=product_name, 
@@ -852,7 +848,7 @@ def addSale(request):
                     quantity__gt=0
                 ).values_list('product_type', flat=True).distinct()
                 
-                error_msg = f"❌ Cannot record sale: {product_name} ({product_type}) is not available in stock! "
+                error_msg = f" Cannot record sale: {product_name} ({product_type}) is not available in stock! "
                 
                 if available_products:
                     available_types = ", ".join(available_products)
@@ -872,11 +868,11 @@ def addSale(request):
                     'data': {'available_products': available_products}
                 })
 
-            # ✅ Check if enough consolidated stock is available
+            #  Check if enough consolidated stock is available
             if total_available < quantity_to_sell:
                 messages.error(
                     request,
-                    f'❌ Insufficient stock for {product_name} ({product_type})! '
+                    f' Insufficient stock for {product_name} ({product_type})! '
                     f'Available quantity: {total_available} units, Requested: {quantity_to_sell} units. '
                     f'Please reduce the quantity to proceed with the sale.'
                 )
@@ -888,11 +884,11 @@ def addSale(request):
                     'data': {'available_products': available_products}
                 })
 
-            # ✅ Check if consolidated stock quantity would go to zero
+            #  Check if consolidated stock quantity would go to zero
             if total_available == quantity_to_sell:
                 messages.warning(
                     request,
-                    f'⚠️ Note: This sale has completely exhausted the stock for {product_name} ({product_type}). '
+                    f' Note: This sale has completely exhausted the stock for {product_name} ({product_type}). '
                     f'Consider restocking this item soon.'
                 )
 
@@ -1224,7 +1220,7 @@ def addCustomer(request):
                 for manager in managers:
                     Notification.objects.create(
                         user=manager,
-                        message=f"🆕 NEW CUSTOMER: {customer.name} has been added by {request.user.get_full_name() or request.user.username}",
+                        message=f" NEW CUSTOMER: {customer.name} has been added by {request.user.get_full_name() or request.user.username}",
                         activity_type="success"
                     )
             except Exception as e:
@@ -1315,7 +1311,7 @@ def addSupplier(request):
                 for manager in managers:
                     Notification.objects.create(
                         user=manager,
-                        message=f"🆕 NEW SUPPLIER: {supplier.name} has been added by {request.user.get_full_name() or request.user.username}",
+                        message=f" NEW SUPPLIER: {supplier.name} has been added by {request.user.get_full_name() or request.user.username}",
                         activity_type="success"
                     )
             except Exception as e:
