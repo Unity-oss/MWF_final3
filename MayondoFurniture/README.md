@@ -38,6 +38,17 @@ A comprehensive Django web application for managing furniture business operation
 - **Stock Reports**: Inventory analytics and low-stock alerts
 - **CRUD Operations**: Full create, read, update, delete functionality
 
+### 👤 Customer Management
+- **Add Customers**: Register customers with name, phone, email, and address
+- **View Customers**: Browse full customer list and individual profiles
+- **Edit/Delete**: Maintain up-to-date customer records
+
+### 🏭 Supplier Management
+- **Add Suppliers**: Register suppliers with contact details
+- **View Suppliers**: Browse supplier list and profiles
+- **Edit/Delete**: Maintain accurate supplier information
+- **Linked to Stock**: Suppliers are linked directly to stock entries
+
 ### 📈 Reporting System
 - **Sales Reports**: Revenue analysis, sales trends, agent performance
 - **Stock Reports**: Inventory levels, product categories, supplier tracking
@@ -80,14 +91,21 @@ MayondoFurniture/
 │   ├── admin.py              # Django admin configuration
 │   ├── search.py             # Search functionality
 │   ├── signals.py            # Django signals for notifications
-│   ├── templates/            # HTML templates
+│   ├── templates/            # HTML templates (all flat in one directory)
 │   │   ├── base.html         # Master template with navigation
 │   │   ├── dashboard.html    # Main dashboard interface
-│   │   ├── login.html        # User authentication
-│   │   ├── sales/            # Sales-related templates
-│   │   ├── stock/            # Inventory templates
-│   │   └── reports/          # Report templates
-│   ├── static/               # Static files (CSS, images, JS)
+│   │   ├── login.html / logout.html / index.html
+│   │   ├── add_sale.html / sales.html / edit_sale.html / view_sale.html
+│   │   ├── add_stock.html / stock.html / edit_stock.html / view_stock.html
+│   │   ├── add_customer.html / customerlist.html / edit_customer.html / view_customer.html
+│   │   ├── add_supplier.html / supplierlist.html / edit_supplier.html / view_supplier.html
+│   │   ├── add_employee.html / employee_list.html / edit_employee.html / view_employee.html
+│   │   ├── sales_report.html / stock_report.html / gen_report.html / receipt.html
+│   │   ├── forms/            # Reusable form partial templates
+│   │   └── snippets/         # Reusable UI snippets
+│   ├── static/               # Static files
+│   │   └── js/
+│   │       └── sales_form.js # Dynamic sales form logic
 │   └── migrations/           # Database migrations
 ├── db.sqlite3                # Development database
 ├── manage.py                 # Django management script
@@ -217,23 +235,38 @@ MayondoFurniture/
 
 ## 📊 Data Models
 
-### Sale Model
-- Product identification and customer details
-- Quantity and pricing information
-- Payment method and logistics (transport)
-- Sales agent tracking
-- Date/time stamps
+### Customer Model
+- Name (unique), phone, email, address
+- Linked to Sales via foreign key
 
-### Stock Model  
-- Product categories (Timber, Sofa, Tables, Cupboards, Drawer, Poles)
-- Supplier information and origin tracking
-- Pricing: unit price and total cost
-- Inventory quantity management
+### Supplier Model
+- Company name (unique), contact person, phone, email, address
+- Linked to Stock entries via foreign key
+
+### Product Model
+- Central product catalog (name + type, unique together)
+- Categories: Timber, Sofa, Tables, Cupboards, Drawer, Poles
+- Types: Wood, Furniture
+- Auto-created from Sale/Stock entries
+
+### Sale Model
+- Auto-generated product ID (format: `SALE-YYYYMMDD-XXXX`)
+- Linked to Customer and Product via foreign keys
+- Quantity, unit price, auto-calculated total (incl. optional 5% transport fee)
+- Payment method: Cash, Cheque, Bank Overdraft
+- Sales agent name and date
+
+### Stock Model
+- Auto-generated product ID (format: `STK-YYYYMMDD-XXXX`)
+- Product categories and type (same choices as Sale)
+- Linked to Supplier via foreign key
+- Origin: Western, Central, Eastern
+- Quantity, unit cost, auto-calculated total cost
 
 ### Notification Model
-- User-specific notifications
-- Activity types and read status
-- Timestamp tracking for chronological display
+- User-specific notifications linked to Django User
+- Message, activity type, read status
+- Timestamp for chronological ordering
 
 ## 🔧 Customization
 
